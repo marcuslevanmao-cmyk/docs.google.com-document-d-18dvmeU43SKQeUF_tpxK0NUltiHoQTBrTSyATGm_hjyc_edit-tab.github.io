@@ -1,18 +1,16 @@
 :root {
-  --header-bg: #fff;
-  --toolbar-bg: #fff;
+  --header-bg: #ffffff;
+  --toolbar-bg: #ffffff;
   --canvas-bg: #f8f9fa;
   --border-subtle: #e0e0e0;
   --border-strong: #dadce0;
   --text-primary: #202124;
   --text-secondary: #5f6368;
   --accent-blue: #1a73e8;
-  --tabs-width: 260px;
-  --rail-width: 56px;
-  --panel-width: 300px;
-  --page-width: 8.5in;
-  --header-h: 116px;
-  --ruler-h: 22px;
+  --tabs-width: 240px;
+  --panel-width: 320px;
+  --page-width: 816px;
+  --ruler-h: 20px;
 }
 
 * { box-sizing: border-box; }
@@ -22,7 +20,7 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: "Times New Roman", Times, serif;
+  font-family: Arial, sans-serif;
   color: var(--text-primary);
   background: var(--canvas-bg);
 }
@@ -33,103 +31,87 @@ html, body {
   flex-direction: column;
 }
 
-/* ---------- App shell / header ---------- */
 .app-header {
   flex: 0 0 auto;
   background: var(--header-bg);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-strong);
+  z-index: 10;
 }
 
 .workspace-wrapper {
   flex: 1 1 auto;
   display: flex;
+  flex-direction: row;
   width: 100%;
   overflow: hidden;
   position: relative;
 }
 
-/* Document tabs sidebar */
+/* Tabs Sidebar Component Layout styling */
 .tabs-sidebar {
   flex: 0 0 var(--tabs-width);
   width: var(--tabs-width);
-  background: var(--canvas-bg);
-  border-right: 1px solid var(--border-subtle);
-  padding: 12px 12px 0;
-  overflow-y: auto;
-  position: relative;
+  background: #ffffff;
+  border-right: 1px solid var(--border-strong);
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
 }
-.tabs-sidebar[hidden] { display: none; }
+.tabs-panel-title {
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0 16px 12px 16px;
+  letter-spacing: 0.5px;
+}
+.tabs-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
 
-/* Center Column: independently scrolling document canvas */
 .doc-canvas {
   flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 32px 0 200px;
+  background: var(--canvas-bg);
+  padding: 0 0 120px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  scroll-behavior: smooth;
+}
+#pages-container, .vh-canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
-/* Right Column */
 .side-panel {
-  flex: 0 0 auto;
-  overflow-y: auto;
+  flex: 0 0 var(--panel-width);
+  width: var(--panel-width);
   background: var(--canvas-bg);
+  border-left: 1px solid var(--border-strong);
+  overflow-y: auto;
 }
 
-@media (max-width: 900px) {
-  .tabs-sidebar { display: none; }
-}
-
-/* ---------- Version history full-screen overlay ---------- */
 .version-history-view {
   position: fixed;
   inset: 0;
-  z-index: 1000;
-  background: #fff;
+  z-index: 100;
+  background: var(--canvas-bg);
   display: flex;
   flex-direction: column;
 }
 .version-history-view[hidden] { display: none; }
 
-.vh-body {
-  flex: 1 1 auto;
-  display: flex;
-  overflow: hidden;
-  background: var(--canvas-bg);
-}
-.vh-canvas {
-  flex: 1 1 auto;
-  background: var(--canvas-bg);
-  border-right: 1px solid var(--border-subtle);
-}
 .vh-panel {
   flex: 0 0 var(--panel-width);
   width: var(--panel-width);
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
+  background: #ffffff;
+  border-left: 1px solid var(--border-strong);
   overflow-y: auto;
-}
-
-/* Dynamic simulation style overrides for historical testing */
-.handwritten-draft {
-  font-family: "Comic Sans MS", "Chalkboard SE", "Marker Felt", cursive !important;
-  color: #1c3aa9 !important;
-  line-height: 1.6 !important;
-}
-
-.handwritten-draft del {
-  color: #d93025 !important;
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-.handwritten-draft ins {
-  color: #137333 !important;
-  text-decoration: none;
-  background-color: #e6f4ea;
+  padding: 16px;
 }
