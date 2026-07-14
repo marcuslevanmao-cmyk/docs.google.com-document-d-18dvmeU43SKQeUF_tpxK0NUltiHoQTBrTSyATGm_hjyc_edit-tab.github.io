@@ -1,29 +1,31 @@
 /**
- * history.js — The State Timeline Engine
+ * history.js — Chronological Versioning Database Layout Manager
  */
 const HistoryEngine = (() => {
   let currentVersionIndex = -1;
-  const versionHistory = []; // [{ timestamp: Date, content: string[], label: string, isHandwritten: boolean }]
+  const versionHistory = []; // Snapshots storage: [{ timestamp: Date, content: string[], label: string, isHandwritten: boolean }]
 
   let snapshotTimer = null;
   const SNAPSHOT_DEBOUNCE_MS = 4000;
 
   function readPagesContent() {
-    const pages = document.querySelectorAll('.doc-page');
+    const pages = document.querySelectorAll('#doc-canvas .doc-page');
     return Array.from(pages).map((p) => p.innerHTML);
   }
 
-  function captureSnapshot(label, customDate = null, isHandwritten = false) {
+  function captureSnapshot(label, targetDate = null, isHandwritten = false) {
     const content = readPagesContent();
+    if (content.length === 0 || (content.length === 1 && content[0].trim() === '')) return;
+
     const last = versionHistory[versionHistory.length - 1];
     if (last && JSON.stringify(last.content) === JSON.stringify(content)) {
       return;
     }
 
     versionHistory.push({
-      timestamp: customDate || new Date(),
+      timestamp: targetDate || new Date(),
       content,
-      label: label || `${content.length} page${content.length === 1 ? '' : 's'}`,
+      label: label || `${content.length} page workspace snapshot`,
       isHandwritten: isHandwritten
     });
     currentVersionIndex = versionHistory.length - 1;
@@ -115,13 +117,17 @@ const HistoryEngine = (() => {
           <div class="version-time">${formatTime(v.timestamp)}</div>
         </div>
         <div class="version-author" style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-          ${v.label} ${v.isHandwritten ? '✍️ (Draft Layout)' : ''}
+          ${v.label} ${v.isHandwritten ? '✍️' : ''}
         </div>
       `;
 
       item.addEventListener('click', () => {
-        rollbackToVersion(originalIndex);
+        currentVersionIndex = originalIndex;
         document.getElementById('vh-title-date').textContent = `${formatDateLabel(v.timestamp)}, ${formatTime(v.timestamp)}`;
+        renderVersionList();
+        
+        const vhCanvas = document.getElementById('vh-canvas');
+        renderReadOnlyPages(vhCanvas, v.content, v.isHandwritten);
       });
       list.appendChild(item);
     });
