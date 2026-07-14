@@ -1,11 +1,10 @@
 /**
  * app.js — Core app initialization and global state manager.
- * Wires the editor, comments, and history engines to the DOM chrome
- * (toolbar buttons, panel toggles, document title).
+ * Wires the editor, comments, and history engines to the DOM chrome.
  */
 
 const AppState = {
-  activePanel: 'comments', // 'comments' | 'history'
+  commentsOpen: false,
 };
 
 function initToolbar() {
@@ -20,6 +19,14 @@ function initToolbar() {
       if (action === 'undo' || action === 'redo') {
         document.execCommand(action);
         return;
+      }
+      if (action === 'print') {
+        window.print();
+        return;
+      }
+      if (action === 'spellcheck' || action === 'paintformat' || action === 'search' ||
+          action === 'checklist' || action === 'image' || action === 'dec-size' || action === 'inc-size') {
+        return; // visual affordance only in this demo
       }
       if (action === 'forecolor') {
         document.execCommand('foreColor', false, '#d93025');
@@ -40,27 +47,67 @@ function initToolbar() {
   });
 }
 
-function initPanelToggles() {
+/** Right column toggles between the idle addon rail and the wide Comments panel. */
+function initCommentsPanel() {
   const commentsBtn = document.getElementById('comments-toggle-btn');
-  const historyBtn = document.getElementById('history-toggle-btn');
+  const closeBtn = document.getElementById('comments-close-btn');
+  const addonRail = document.getElementById('addon-rail');
   const commentsPanel = document.getElementById('comments-panel');
-  const historyPanel = document.getElementById('history-panel');
 
-  function showPanel(name) {
-    AppState.activePanel = name;
-    commentsPanel.hidden = name !== 'comments';
-    historyPanel.hidden = name !== 'history';
-    commentsBtn.classList.toggle('active', name === 'comments');
-    historyBtn.classList.toggle('active', name === 'history');
+  function open() {
+    AppState.commentsOpen = true;
+    addonRail.hidden = true;
+    commentsPanel.hidden = false;
+    commentsBtn.classList.add('active');
+  }
+  function close() {
+    AppState.commentsOpen = false;
+    addonRail.hidden = false;
+    commentsPanel.hidden = true;
+    commentsBtn.classList.remove('active');
   }
 
-  commentsBtn.addEventListener('click', () => showPanel('comments'));
-  historyBtn.addEventListener('click', () => {
-    HistoryEngine.renderVersionList();
-    showPanel('history');
-  });
+  commentsBtn.addEventListener('click', () => (AppState.commentsOpen ? close() : open()));
+  closeBtn.addEventListener('click', close);
+}
 
-  showPanel('comments');
+/** Version history opens a full-screen takeover, matching the reference screenshot. */
+function initVersionHistoryView() {
+  const historyBtn = document.getElementById('history-toggle-btn');
+  const view = document.getElementById('version-history-view');
+  const backBtn = document.getElementById('vh-back-btn');
+  const titleEl = document.getElementById('vh-title');
+  const vhCanvas = document.getElementById('vh-canvas');
+
+  function open() {
+    const history = HistoryEngine.getHistory();
+    const idx = HistoryEngine.getCurrentIndex();
+    const current = history[idx] || history[history.length - 1];
+
+    if (current) {
+      titleEl.textContent = `Today, ${HistoryEngine.formatTime(current.timestamp)}`;
+      HistoryEngine.renderReadOnlyPages(vhCanvas, current.content);
+    } else {
+      titleEl.textContent = 'Today';
+      vhCanvas.innerHTML = '';
+    }
+
+    HistoryEngine.renderVersionList();
+    view.hidden = false;
+  }
+
+  function close() {
+    view.hidden = true;
+  }
+
+  historyBtn.addEventListener('click', open);
+  backBtn.addEventListener('click', close);
+}
+
+function initTabsSidebarToggles() {
+  const backBtn = document.getElementById('tabs-back-btn');
+  const sidebar = document.getElementById('tabs-sidebar');
+  if (backBtn) backBtn.addEventListener('click', () => (sidebar.hidden = true));
 }
 
 function initTitleField() {
@@ -70,17 +117,23 @@ function initTitleField() {
   });
 }
 
+function initRulerMarkers() {
+  // Ruler margin markers default to 1in margins already set in CSS;
+  // this hook exists so a future drag-to-resize feature has a place to live.
+}
+
 function initApp() {
-  const firstPage = EditorEngine.initFirstPage();
+  EditorEngine.initFirstPage();
   CommentsEngine.bindSelectionListener();
   initToolbar();
-  initPanelToggles();
+  initCommentsPanel();
+  initVersionHistoryView();
+  initTabsSidebarToggles();
   initTitleField();
+  initRulerMarkers();
 
-  // Baseline snapshot so the timeline has a starting point.
   HistoryEngine.captureSnapshot('Document created');
 
-  // Re-flow comment card positions on window resize (page widths can reflow).
   window.addEventListener('resize', () => CommentsEngine.renderCommentCards());
 }
 
