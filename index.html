@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>On the Stoics - Google Docs</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'><path d='M16 0H3a2 2 0 0 0-2 2v28a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8z' fill='%23267CDE'/><path d='M16 0v6a2 2 0 0 0 2 2h5z' fill='%237BAAF7'/><rect x='6' y='14' width='12' height='2' fill='%23fff'/><rect x='6' y='19' width='12' height='2' fill='%23fff'/><rect x='6' y='24' width='8' height='2' fill='%23fff'/></svg>">
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/components.css">
   <link rel="stylesheet" href="styles/comments.css">
@@ -14,12 +15,12 @@
   <header class="app-header">
     <div class="header-top">
       <div class="doc-icon">
-        <svg width="24" height="32" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17 0H3a2 2 0 0 0-2 2v32a2 2 0 0 0 2 2h22a2 2 0 0 0 2-2V9L17 0z" fill="#4285F4"/>
-          <path d="M17 0v7a2 2 0 0 0 2 2h8L17 0z" fill="#A0C3FF"/>
-          <rect x="6" y="16" width="14" height="2" fill="#fff"/>
-          <rect x="6" y="22" width="14" height="2" fill="#fff"/>
-          <rect x="6" y="28" width="8" height="2" fill="#fff"/>
+        <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 0H3a2 2 0 0 0-2 2v28a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8L16 0z" fill="#267CDE"/>
+          <path d="M16 0v6a2 2 0 0 0 2 2h5L16 0z" fill="#7BAAF7"/>
+          <rect x='5' y='14' width='14' height='2' fill='#fff'/>
+          <rect x='5' y='19' width='14' height='2' fill='#fff'/>
+          <rect x='5' y='24' width='9' height='2' fill='#fff'/>
         </svg>
       </div>
       <div class="title-block">
@@ -68,16 +69,12 @@
 
   <div class="workspace-wrapper">
     <aside class="tabs-sidebar" id="tabs-sidebar">
-      <div class="tabs-header">
-        <button class="icon-btn" id="tabs-back-btn" title="Close outline">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </button>
-      </div>
-      <button class="tab-item active">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Outline
+      <div class="tabs-panel-title">Document Tabs</div>
+      <div class="tabs-container" id="tabs-container"></div>
+      <button class="add-tab-btn" id="add-tab-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Tab
       </button>
-      <p class="tabs-hint">Headings added to the document will appear here.</p>
     </aside>
 
     <main class="doc-canvas" id="doc-canvas">
@@ -88,6 +85,7 @@
           <div class="ruler-margin-marker right-margin" style="right: 1in;"></div>
         </div>
       </div>
+      <div id="pages-container"></div>
     </main>
 
     <aside class="side-panel" id="comments-sidebar">
@@ -105,21 +103,34 @@
       <button class="vh-back-btn" id="vh-back-btn" title="Close version history">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </button>
-      <div class="vh-title" id="vh-title-current">Document Version View</div>
+      <div class="vh-title" id="vh-title-current">Version History Preview</div>
+      <button class="restore-action-btn" id="vh-restore-trigger-btn">Restore this version</button>
     </div>
     <div class="vh-subbar">
-      <span>Previewing past state logs</span>
+      <span>Previewing content state logs</span>
     </div>
     <div class="workspace-wrapper">
       <main class="doc-canvas vh-canvas" id="vh-canvas"></main>
       <aside class="vh-panel">
         <div class="vh-panel-header">
-          <h2>Version history</h2>
+          <h2>Version logs</h2>
         </div>
         <div class="version-list" id="version-list"></div>
       </aside>
     </div>
   </div>
+
+  <div class="modal-overlay" id="confirm-modal" hidden>
+    <div class="modal-card">
+      <h3>Restore this version?</h3>
+      <p>Are you sure you want to restore the document to the previous version? Your current workspace state layout will be replaced.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+        <button class="btn-primary" id="modal-confirm-btn">Yes, Restore</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="js/editor.js"></script>
