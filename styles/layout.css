@@ -184,20 +184,23 @@ html, body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* Green Highlight for Edits */
-.vh-edit-block {
-  background-color: #e6f4ea; /* Soft green background */
-  color: #0d652d; /* Darker green text */
+/* Inline highlight for text specifically edited by "You" (the editor),
+   scoped tightly to the edited passage rather than the whole document —
+   everything outside a .vh-edit-you span is Marcus's untouched writing. */
+.vh-edit-you {
   position: relative;
+  background-color: rgba(66, 133, 244, 0.08);
   border-radius: 2px;
-  padding: 2px 0;
+  padding: 2px 6px;
+  margin: 0 -6px 16px;
 }
-.vh-edit-author {
+.vh-edit-label {
   position: absolute;
   top: -16px;
   left: 0;
   font-size: 10px;
-  color: #ccc; /* Light gray author text */
+  font-weight: 500;
+  color: #4285f4;
   white-space: nowrap;
 }
 
@@ -282,6 +285,9 @@ html, body {
     display: flex;
     flex-direction: column;
     z-index: 1000;
+}
+.comments-sidebar[hidden] {
+    display: none;
 }
 
 .cs-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
