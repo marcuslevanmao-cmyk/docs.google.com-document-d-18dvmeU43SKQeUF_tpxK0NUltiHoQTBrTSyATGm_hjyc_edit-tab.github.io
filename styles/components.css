@@ -1,4 +1,3 @@
-/* ---------- 2018-2021 GDocs Top Chrome Styling ---------- */
 .header-top {
   display: flex;
   align-items: center;
@@ -17,6 +16,7 @@
   padding: 2px 6px;
   border-radius: 4px;
   font-family: inherit;
+  font-weight: bold;
   max-width: 280px;
 }
 .doc-title:hover { border-color: var(--border-strong); }
@@ -38,7 +38,6 @@
 
 .header-actions { display: flex; align-items: center; gap: 12px; }
 
-/* Fixed Squarish Functional Buttons */
 .icon-btn, .toolbar-btn, .vh-back-btn {
   width: 32px; height: 32px; background: transparent; border: none;
   border-radius: 4px; color: var(--text-secondary); display: inline-flex;
@@ -60,18 +59,16 @@
   color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold;
 }
 
-/* ---------- Standard Functional Strip Row ---------- */
 .toolbar {
   display: flex; align-items: center; gap: 2px; padding: 4px 16px;
-  background: #ffffff; border-top: 1px solid var(--border-subtle); margin: 0;
+  background: #ffffff; border-top: 1px solid var(--border-subtle);
 }
 .toolbar-sep { width: 1px; height: 18px; background: var(--border-strong); margin: 0 6px; }
 
-/* ---------- Structural Document Page Styling ---------- */
 .doc-page {
   background: #ffffff;
   width: var(--page-width);
-  min-height: 1056px; /* Explicit 11 inches height rule */
+  min-height: 1056px;
   padding: 1in;
   box-shadow: 0 1px 3px rgba(60,64,67,0.15), 0 1px 2px rgba(60,64,67,0.3);
   margin-top: 16px;
@@ -82,7 +79,6 @@
 
 .page-number { font-size: 11px; color: var(--text-secondary); margin: 8px 0 24px; }
 
-/* ---------- Left Side Affordances ---------- */
 .tabs-header { margin-bottom: 12px; }
 .tab-item {
   width: 100%; display: flex; align-items: center; gap: 8px; background: none;
@@ -92,8 +88,11 @@
 .tab-item.active { background: rgba(26,115,232,0.1); }
 .tabs-hint { font-size: 12px; color: var(--text-secondary); padding: 0 12px; line-height: 1.5; }
 
-/* ---------- Embedded Document Rules Tool ---------- */
 .ruler { width: var(--page-width); height: var(--ruler-h); background: #ffffff; position: relative; margin-bottom: 4px; border-bottom: 1px solid var(--border-subtle); }
 .ruler-track { position: relative; width: 100%; height: 100%; }
 .ruler-face { width: 100%; height: 100%; background: #f1f3f4; }
 .ruler-margin-marker { position: absolute; top: 0; width: 6px; height: 100%; background: var(--accent-blue); opacity: 0.4; }
+
+.vh-header { display: flex; align-items: center; gap: 14px; padding: 12px 20px; background: #ffffff; border-bottom: 1px solid var(--border-strong); }
+.vh-title { font-size: 18px; font-weight: 500; }
+.vh-subbar { padding: 8px 20px; background: #f1f3f4; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border-strong); }
