@@ -3,17 +3,37 @@
  * editor.js — Multi-Tab Architecture with Live Custom Renaming Engine
  */
 
-// Define the initial document content that was missing!
-const initialDocContent = `<div style="font-family: 'Times New Roman', Times, serif; font-size: 16px; line-height: 1.6;">
-  <p>Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature, our need for belonging, our search for meaning, and our desire for ethical guidance.</p>
+// ----- Marcus's final content (used as default for main tab) -----
+const marcusFinalContent = `<div style="font-family: 'Times New Roman', Times, serif; font-size: 16px; line-height: 1.6;">
+  <p>Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature, our need for belonging, our search for meaning, and our desire for ethical guidance. Religion has been one of humanity's most effective systems for organizing communities and transmitting values, not because of the certainty of its supernatural claims, but because of its unparalleled ability to unite people and inspire moral action.</p>
+  <p>Religion has long served as one of humanity's most influential systems for moral education. Christianity, for example, spread complex ethical teachings through parables. These simple stories could be understood and remembered by children, farmers, and kings alike. Values like charity, forgiveness, and sacrifice were taught as absolute truths.</p>
+</div>`;
+
+// ----- Brainstorm tab content -----
+const brainstormContent = `<div style="font-family: 'Times New Roman', Times, serif; font-size: 16px; line-height: 1.6;">
+  <h2>Brainstorm – The Utility of Gods</h2>
+  <ul>
+    <li>Why do gods exist across cultures? Universal human needs?</li>
+    <li>Social cohesion vs. truth – is utility more important than veracity?</li>
+    <li>Moral education – parables as teaching tools</li>
+    <li>Ritual and community bonding</li>
+    <li>Critique: does religion hinder progress?</li>
+  </ul>
+  <p><em>Add more ideas as they come...</em></p>
 </div>`;
 
 const EditorEngine = (() => {
+  // Two tabs now: "The Utility of Gods" (main) and "Brainstorm"
   const documentTabs = [
     {
       id: "tab_1",
       title: "The Utility of Gods",
-      htmlContent: initialDocContent
+      htmlContent: marcusFinalContent
+    },
+    {
+      id: "tab_2",
+      title: "Brainstorm",
+      htmlContent: brainstormContent
     }
   ];
   let activeTabId = "tab_1";
@@ -140,7 +160,6 @@ const EditorEngine = (() => {
     }
   }
 
-  // Expose the tabs array for other modules
   function getTabs() { return documentTabs; }
   function getActiveTabId() { return activeTabId; }
   function setActiveTabId(id) { activeTabId = id; }
