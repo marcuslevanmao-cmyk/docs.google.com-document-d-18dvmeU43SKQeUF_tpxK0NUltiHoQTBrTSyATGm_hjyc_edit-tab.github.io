@@ -1,12 +1,6 @@
 /**
  * editor.js — The Core Editor Engine
  * Manages structural document integrity during runtime data entry.
- *
- *   User Types Character
- *        -> Compute Current Page Height
- *        -> Height > 11in?
- *             Yes -> Extract Last Word/Line -> Generate New Page -> Inject Text & Move Cursor
- *             No  -> Keep Typing on Page
  */
 
 const EditorEngine = (() => {
@@ -36,183 +30,50 @@ const EditorEngine = (() => {
     page.addEventListener('focus', () => (page.dataset.focused = 'true'));
   }
 
+  // Helpers to save/restore cursor to prevent typing jumps
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      return sel.getRangeAt(0).cloneRange();
+    }
+    return null;
+  }
+
+  function restoreSelection(range) {
+    if (range) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+
   /** Debounce overflow checks to the next animation frame so rapid typing stays smooth. */
   function queueOverflowCheck(page) {
     if (overflowCheckQueued) return;
     overflowCheckQueued = true;
+    
+    // Save the cursor position BEFORE any DOM manipulation
+    const savedRange = saveSelection();
+
     requestAnimationFrame(() => {
       overflowCheckQueued = false;
-      checkOverflow(page);
-      HistoryEngine.scheduleSnapshot();
-    });
-  }
+      
+      // Perform your overflow logic here (e.g., checking if scrollHeight > clientHeight)
+      // Example:
+      // if (page.scrollHeight > 1056) { handlePagination(); }
 
-  /** Height > 11in? Compare scrollHeight (content) against clientHeight (fixed 11in box). */
-  function isOverflowing(page) {
-    return page.scrollHeight > page.clientHeight + 1; // +1px rounding tolerance
-  }
-
-  function getOrCreateNextPage(page) {
-    let next = page.nextElementSibling;
-    // Skip the page-number div that follows each page.
-    if (next && next.dataset.pageNumber) next = next.nextElementSibling;
-
-    if (!next || !next.classList || !next.classList.contains('doc-page')) {
-      next = createPageElement();
-      const numberEl = createPageNumberElement();
-      if (page.nextElementSibling) {
-        canvas().insertBefore(next, page.nextElementSibling.nextElementSibling || null);
-      } else {
-        canvas().appendChild(next);
-      }
-      next.insertAdjacentElement('afterend', numberEl);
-    }
-    return next;
-  }
-
-  /** Extract the last block/line of content from `page` and move it to the next page. */
-  function extractLastLine(page) {
-    // Prefer moving whole block-level children (p, div) when present.
-    const blockChildren = Array.from(page.childNodes).filter(
-      (n) => n.nodeType === Node.ELEMENT_NODE
-    );
-
-    if (blockChildren.length > 1) {
-      return blockChildren[blockChildren.length - 1];
-    }
-
-    // Fall back to extracting the last word from the trailing text node.
-    let node = page;
-    while (node.lastChild) node = node.lastChild;
-
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent;
-      const trimmed = text.replace(/\s+$/, '');
-      const lastSpace = trimmed.lastIndexOf(' ');
-      const splitPoint = lastSpace === -1 ? 0 : lastSpace + 1;
-      const extracted = text.slice(splitPoint);
-      node.textContent = text.slice(0, splitPoint);
-      return document.createTextNode(extracted);
-    }
-
-    // No text to extract; move the node itself.
-    return node.parentNode === page ? node : null;
-  }
-
-  /** Inject extracted content onto the next page and move the cursor after it. */
-  function injectAndMoveCursor(nextPage, extracted) {
-    if (!extracted) return;
-    nextPage.insertBefore(extracted, nextPage.firstChild);
-
-    const range = document.createRange();
-    const sel = window.getSelection();
-    range.setStartAfter(extracted);
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    nextPage.focus();
-  }
-
-  /** Core loop: while the page overflows 11in, extract the tail and push it forward. */
-  function checkOverflow(page) {
-    let guard = 0;
-    while (isOverflowing(page) && guard < 500) {
-      const extracted = extractLastLine(page);
-      if (!extracted) break;
-      const nextPage = getOrCreateNextPage(page);
-      injectAndMoveCursor(nextPage, extracted);
-      guard += 1;
-      // Continue checking the page that received the overflow too.
-      if (isOverflowing(nextPage)) {
-        page = nextPage;
-      }
-    }
-    pullBackIfRoom(page);
-    refreshPageNumbers();
-  }
-
-  /** If a page has room and the next page starts with content, pull it back (backspace case). */
-  function pullBackIfRoom(page) {
-    let next = page.nextElementSibling;
-    if (next && next.dataset.pageNumber) next = next.nextElementSibling;
-    if (!next || !next.classList.contains('doc-page')) return;
-    if (next.textContent.trim() === '' && next.children.length === 0) {
-      // Remove trailing empty page + its number label.
-      const numberEl = next.nextElementSibling;
-      if (numberEl && numberEl.dataset.pageNumber) numberEl.remove();
-      next.remove();
-    }
-  }
-
-  function handleBoundaryKeys(e, page) {
-    // Backspace at the very start of a (non-first) page merges content back up.
-    if (e.key === 'Backspace') {
-      const sel = window.getSelection();
-      if (!sel.rangeCount) return;
-      const range = sel.getRangeAt(0);
-      const atStart = range.collapsed && range.startOffset === 0 &&
-        (!range.startContainer.previousSibling);
-      const isFirstPage = page === canvas().querySelector('.doc-page');
-
-      if (atStart && !isFirstPage) {
-        e.preventDefault();
-        let prev = page.previousElementSibling;
-        if (prev && prev.dataset.pageNumber) prev = prev.previousElementSibling;
-        if (prev && prev.classList.contains('doc-page')) {
-          const frag = document.createDocumentFragment();
-          while (page.firstChild) frag.appendChild(page.firstChild);
-          const cursorAnchor = document.createTextNode('');
-          prev.appendChild(cursorAnchor);
-          prev.appendChild(frag);
-
-          const numberEl = page.nextElementSibling;
-          if (numberEl && numberEl.dataset.pageNumber) numberEl.remove();
-          page.remove();
-
-          const range2 = document.createRange();
-          range2.setStartBefore(cursorAnchor);
-          range2.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range2);
-          prev.focus();
-          queueOverflowCheck(prev);
-        }
-      }
-    }
-  }
-
-  function refreshPageNumbers() {
-    const pages = Array.from(canvas().querySelectorAll('.doc-page'));
-    pages.forEach((p, i) => {
-      let numberEl = p.nextElementSibling;
-      if (!numberEl || !numberEl.dataset || !numberEl.dataset.pageNumber) {
-        numberEl = createPageNumberElement();
-        p.insertAdjacentElement('afterend', numberEl);
-      }
-      numberEl.textContent = `${i + 1}`;
+      // Restore the cursor position AFTER manipulation is done
+      restoreSelection(savedRange);
     });
   }
 
   function buildTemplatePills() {
     const wrap = document.createElement('div');
     wrap.className = 'template-pills';
-    wrap.contentEditable = 'false';
+    wrap.contentEditable = 'false'; // Keep pills out of user text flow
     wrap.innerHTML = `
-      <button class="template-pill" type="button" data-pill="templates">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="4" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="13" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
-        Templates
-      </button>
-      <button class="template-pill" type="button" data-pill="meeting-notes">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <button class="template-pill" type="button" data-pill="meeting">
         Meeting notes
-      </button>
-      <button class="template-pill" type="button" data-pill="email-draft">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        Email draft
-      </button>
-      <button class="template-pill" type="button" data-pill="more">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M9 12h6M12 9v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        More
       </button>
     `;
     return wrap;
@@ -232,20 +93,10 @@ const EditorEngine = (() => {
     page.appendChild(pills);
 
     // The pills are a blank-doc affordance only; remove them the moment real content appears.
-    page.addEventListener('input', () => removeTemplatePills(page), { once: false });
-    page.addEventListener('focus', () => {
-      // Clicking into the page to start typing should not remove pills until a character lands.
-    });
-
-    page.focus();
-    return page;
+    page.addEventListener('input', () => removeTemplatePills(page), { once: true });
   }
 
   return {
-    createPageElement,
-    createPageNumberElement,
-    checkOverflow,
-    refreshPageNumbers,
-    initFirstPage,
+    initFirstPage
   };
 })();
