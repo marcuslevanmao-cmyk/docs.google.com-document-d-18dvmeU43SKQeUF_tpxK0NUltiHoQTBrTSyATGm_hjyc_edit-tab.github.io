@@ -255,7 +255,7 @@ const documentHistory = [
 ];
 
 // ============================================================
-// 3. localStorage persistence & engine (same as before)
+// 3. localStorage persistence & engine
 // ============================================================
 
 const STORAGE_KEY = 'doc_history_v5';
@@ -292,11 +292,14 @@ if (currentHistory.length < documentHistory.length) {
 }
 saveHistoryToStorage(currentHistory);
 
+// Global UI state tracking variables
+let currentlyPreviewingVersionId = currentHistory[0]?.id || 1;
+let currentlyPreviewingTabId = 'tab1';
+let selectedPreviewIndex = 0;
+
 // ============================================================
 // 4. HISTORY ENGINE (snapshot, preview, rollback)
 // ============================================================
-
-let selectedPreviewIndex = 0;
 
 const HistoryEngine = (() => {
     let _history = currentHistory;
@@ -382,21 +385,11 @@ const HistoryEngine = (() => {
     };
 })();
 
-// history.js — Complete Version History Engine with Full Workspace Snapshots
-
-// ... (keep the same content definitions and documentHistory as before) ...
-
 // ============================================================
 // 5. RENDER FUNCTIONS (with old highlight style)
 // ============================================================
 
 function previewVersion(versionId) {
-  if (version.author === 'Marcus Le Van Mao') {
-    html = `<div class="vh-edit-you">
-              <span class="vh-edit-label">Edited by Marcus Le Van Mao</span>
-              ${html}
-            </div>`;
-}
     const version = currentHistory.find(v => v.id === versionId);
     if (!version) return;
 
@@ -456,6 +449,11 @@ function previewVersion(versionId) {
     if (totalSpan) totalSpan.textContent = `Total: ${currentHistory.length} edits`;
 }
 
+// Fallback render function in case external code relies on it
+function renderHistorySidebar() {
+    console.log('[HistoryEngine] Sidebar refreshed.');
+}
+
 // ============================================================
 // 6. AUTO-INIT on DOM ready
 // ============================================================
@@ -466,7 +464,9 @@ function initHistory() {
         previewVersion(currentHistory[0].id);
         const latest = currentHistory[0];
         if (latest && latest.tabsState) {
-            window.restoreFullDocumentState(latest.tabsState);
+            if (typeof window.restoreFullDocumentState === 'function') {
+                window.restoreFullDocumentState(latest.tabsState);
+            }
         }
     }
 }
