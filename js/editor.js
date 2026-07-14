@@ -193,10 +193,50 @@ const EditorEngine = (() => {
     });
   }
 
+  function buildTemplatePills() {
+    const wrap = document.createElement('div');
+    wrap.className = 'template-pills';
+    wrap.contentEditable = 'false';
+    wrap.innerHTML = `
+      <button class="template-pill" type="button" data-pill="templates">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="4" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="13" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
+        Templates
+      </button>
+      <button class="template-pill" type="button" data-pill="meeting-notes">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Meeting notes
+      </button>
+      <button class="template-pill" type="button" data-pill="email-draft">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Email draft
+      </button>
+      <button class="template-pill" type="button" data-pill="more">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M9 12h6M12 9v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        More
+      </button>
+    `;
+    return wrap;
+  }
+
+  function removeTemplatePills(page) {
+    const pills = page.querySelector('.template-pills');
+    if (pills) pills.remove();
+  }
+
   function initFirstPage() {
     const page = createPageElement();
     canvas().appendChild(page);
     canvas().appendChild(createPageNumberElement(1, 1));
+
+    const pills = buildTemplatePills();
+    page.appendChild(pills);
+
+    // The pills are a blank-doc affordance only; remove them the moment real content appears.
+    page.addEventListener('input', () => removeTemplatePills(page), { once: false });
+    page.addEventListener('focus', () => {
+      // Clicking into the page to start typing should not remove pills until a character lands.
+    });
+
     page.focus();
     return page;
   }
