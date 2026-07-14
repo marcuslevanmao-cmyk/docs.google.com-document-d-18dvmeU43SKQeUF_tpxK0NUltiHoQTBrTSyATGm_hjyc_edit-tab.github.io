@@ -63,9 +63,9 @@ const CommentsEngine = (() => {
     popup.className = 'comment-floating-composer';
     popup.style.position = 'fixed';
     // Position near the selection – slightly below and to the left
-    popup.style.left = Math.min(rangeRect.left, window.innerWidth - 340) + 'px';
+    popup.style.left = Math.min(rangeRect.left, window.innerWidth - 360) + 'px';
     popup.style.top = (rangeRect.bottom + 10) + 'px';
-    popup.style.width = '320px';
+    popup.style.width = '340px';
     popup.style.zIndex = '1000';
     popup.innerHTML = `
       <div class="comment-floating-header">
@@ -80,20 +80,18 @@ const CommentsEngine = (() => {
       </div>
     `;
 
-    // Append to body so it's above everything
     document.body.appendChild(popup);
     activePopup = popup;
 
-    // Focus the textarea
     const textarea = popup.querySelector('textarea');
     textarea.focus();
 
-    // --- Event listeners ---
     // Cancel
     popup.querySelector('.cancel-btn').addEventListener('click', () => {
       removeAnchor(cid);
       closePopup();
       pendingRange = null;
+      reflectAddCommentButtonState();
     });
 
     // Close button (×)
@@ -101,6 +99,7 @@ const CommentsEngine = (() => {
       removeAnchor(cid);
       closePopup();
       pendingRange = null;
+      reflectAddCommentButtonState();
     });
 
     // Save
@@ -114,14 +113,10 @@ const CommentsEngine = (() => {
       // Refresh the sidebar list
       renderCommentCards();
 
-      // Remove popup and clear range
       closePopup();
       pendingRange = null;
       reflectAddCommentButtonState();
     });
-
-    // Click outside to close (optional: we could keep it open, but we'll allow cancel)
-    // We'll rely on Cancel / Close.
   }
 
   function closePopup() {
@@ -170,12 +165,9 @@ const CommentsEngine = (() => {
 
     // Get the bounding rect of the range for positioning the popup
     const rect = pendingRange.getBoundingClientRect();
-    // The range is now empty because we cleared selection, but we have the rect from before.
-    // We'll use the rect we saved.
-    showFloatingComposer(cid, textQuote, rect);
-
-    // Reset pendingRange so we don't reuse it
+    // Reset pendingRange so we don't reuse it (but we need the rect)
     pendingRange = null;
+    showFloatingComposer(cid, textQuote, rect);
     reflectAddCommentButtonState();
   }
 
@@ -186,7 +178,7 @@ const CommentsEngine = (() => {
     const list = document.getElementById('comments-list');
     if (!list) return;
 
-    // Remove any empty-state message if present, we'll rebuild
+    // Remove any existing content
     list.innerHTML = '';
 
     // Collect active (non-resolved) comments that still have an anchor in the doc
@@ -197,8 +189,8 @@ const CommentsEngine = (() => {
         if (anchorExists) {
           activeComments.push([key, c]);
         } else {
-          // Orphaned comment – we could delete it, but we'll keep it for now
-          // You might want to auto-clean, but we'll keep it.
+          // If anchor is gone, we could delete the comment automatically
+          // but we'll keep it for now.
         }
       }
     });
@@ -216,7 +208,6 @@ const CommentsEngine = (() => {
       const addBtn = list.querySelector('.btn-primary');
       if (addBtn) {
         addBtn.addEventListener('click', () => {
-          // Prompt for comment (will use pendingRange if any)
           promptForCommentOnSelection();
         });
       }
