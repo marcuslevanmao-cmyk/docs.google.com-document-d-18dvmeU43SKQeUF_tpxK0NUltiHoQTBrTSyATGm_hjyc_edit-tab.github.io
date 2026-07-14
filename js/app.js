@@ -1,8 +1,8 @@
 /**
- * app.js — Document Core App State Management Thread
+ * app.js — Document Core App State Management & Lifecycle Initializer
  */
 
-const ActiveDocumentData = {
+const ActiveDocumentWorkspace = {
   currentTab: 'essay', 
   essay: {
     title: "The Utility of Gods",
@@ -11,7 +11,7 @@ const ActiveDocumentData = {
     ]
   },
   brainstorm: {
-    title: "Brainstorm",
+    title: "Brainstorm Material",
     content: [
       `<strong>The Wasted Potential of Religion — Brainstorm Document</strong><br><br>
        <strong>Main Question:</strong> What is religion supposed to accomplish?<br>
@@ -38,8 +38,8 @@ const ActiveDocumentData = {
 };
 
 function loadTabWorkspace(tabId) {
-  ActiveDocumentData.currentTab = tabId;
-  const docData = ActiveDocumentData[tabId];
+  ActiveDocumentWorkspace.currentTab = tabId;
+  const docData = ActiveDocumentWorkspace[tabId];
   
   const titleInput = document.querySelector('.doc-title');
   if (titleInput) {
@@ -56,10 +56,6 @@ function loadTabWorkspace(tabId) {
     pageNode.contentEditable = 'true';
     pageNode.setAttribute('spellcheck', 'true');
     pageNode.innerHTML = pageHtml;
-    
-    if (tabId === 'brainstorm') {
-      pageNode.classList.add('handwritten-draft');
-    }
     
     if (typeof EditorEngine !== 'undefined') {
       EditorEngine.attachPageListeners(pageNode);
@@ -79,9 +75,9 @@ function initTabsLayoutController() {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       
-      const activeTab = ActiveDocumentData.currentTab;
+      const activeTab = ActiveDocumentWorkspace.currentTab;
       const pages = document.querySelectorAll('#doc-canvas .doc-page');
-      ActiveDocumentData[activeTab].content = Array.from(pages).map(p => p.innerHTML);
+      ActiveDocumentWorkspace[activeTab].content = Array.from(pages).map(p => p.innerHTML);
       
       loadTabWorkspace(btn.dataset.tab);
     });
@@ -90,55 +86,64 @@ function initTabsLayoutController() {
 
 function seedSimulatedHistoryTimeline() {
   const historyList = HistoryEngine.getHistory();
-  historyList.length = 0;
+  historyList.length = 0; // Fresh clear
 
-  // Snapshot 1: Early structural baseline layout
+  // Snapshot 1: Early structural outline
   HistoryEngine.forcePushCustomSnapshot({
     timestamp: new Date('May 12, 2026 09:14:00'),
     label: 'Initial Structural Outline Draft',
     isHandwritten: true,
     content: [
-      `<div class="handwritten-draft">
-        <strong>The Wasted Potential of Religion</strong><br><br>
-        <del>Religion is an old historical phenomenon because prehistoric people were afraid of thunder and death.</del> Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature. Religion has been one of humanity's most effective systems for organizing communities. <ins>However, religion's greatest strength can become its greatest weakness when it discourages curiosity.</ins> The measure of a religion should not be its supernatural claims but the quality of the human beings it helps create.
-      </div>`
+      `<strong>The Wasted Potential of Religion</strong><br><br>
+      <del>Religion is an old historical phenomenon because prehistoric people were afraid of thunder and death.</del> Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature. Religion has been one of humanity's most effective systems for organizing communities. <ins>However, religion's greatest strength can become its greatest weakness when it discourages curiosity.</ins> The measure of a religion should not be its supernatural claims but the quality of the human beings it helps create.`
     ]
   });
 
-  // Snapshot 2: Mid-day structural text additions
+  // Snapshot 2: Mid-day text additions
   HistoryEngine.forcePushCustomSnapshot({
     timestamp: new Date('May 12, 2026 11:30:00'),
     label: 'Expanded Arguments & Sociological Foundations',
     isHandwritten: true,
     content: [
-      `<div class="handwritten-draft">
-        <strong>The Wasted Potential of Religion</strong><br><br>Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature... <br><br>Religion has long served as one of humanity's most influential systems for moral education. <del>Churches use simple ghost stories to get people to behave in groups.</del> Christianity, for example, spread complex ethical teachings through parables. <ins>The sociologist Émile Durkheim argued that religion reinforces social solidarity by binding communities through shared practices.</ins> Stories and rituals are effective because they connect abstract moral ideas to emotion, memory, and identity.
-      </div>`
+      `<strong>The Wasted Potential of Religion</strong><br><br>Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature... <br><br>Religion has long served as one of humanity's most influential systems for moral education. <del>Churches use simple ghost stories to get people to behave in groups.</del> Christianity, for example, spread complex ethical teachings through parables. <ins>The sociologist Émile Durkheim argued that religion reinforces social solidarity by binding communities through shared practices.</ins> Stories and rituals are effective because they connect abstract moral ideas to emotion, memory, and identity.`
     ]
   });
 
-  // Snapshot 3: Final structural cleanup passes
+  // Snapshot 3: Philosophical edits
   HistoryEngine.forcePushCustomSnapshot({
     timestamp: new Date('May 12, 2026 14:45:00'),
     label: 'Philosophical Polish & Revision Cleanup Pass',
     isHandwritten: true,
     content: [
-      `<div class="handwritten-draft">
-        <strong>The Wasted Potential of Religion</strong><br><br>...The measure of a religion should not be the certainty of its supernatural claims but the quality of the human beings it helps create.<br><br>Of course, religion has also inspired remarkable scientific, philosophical, and humanitarian contributions throughout history. <del>Nietzsche said God is dead and that means our entire morality framework is broken.</del> <ins>Nietzsche observed that modern society had outgrown religion's explanatory role but had yet to replace the moral structure it provided.</ins> Camus argued that genuine courage lies in continuing to search despite uncertainty rather than escaping into comforting certainty. <ins>Humanity does not need fewer cathedrals. It needs cathedrals dedicated to truth rather than certainty.</ins>
-      </div>`
+      `<strong>The Wasted Potential of Religion</strong><br><br>...The measure of a religion should not be the certainty of its supernatural claims but the quality of the human beings it helps create.<br><br>Of course, religion has also inspired remarkable scientific, philosophical, and humanitarian contributions throughout history. <del>Nietzsche said God is dead and that means our entire morality framework is broken.</del> <ins>Nietzsche observed that modern society had outgrown religion's explanatory role but had yet to replace the moral structure it provided.</ins> Camus argued that genuine courage lies in continuing to search despite uncertainty rather than escaping into comforting certainty. <ins>Humanity does not need fewer cathedrals. It needs cathedrals dedicated to truth rather than certainty.</ins>`
     ]
   });
 
-  // Snapshot 4: Clean present state baseline
-  HistoryEngine.captureSnapshot('Production Active Workspace');
+  // Active production state representation checkpoint
+  HistoryEngine.captureSnapshot('Current Workspace Production Checkpoint');
+}
+
+function initToolbar() {
+  document.querySelectorAll('.toolbar-btn[data-action]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      if (action === 'undo' || action === 'redo') {
+        document.execCommand(action);
+      } else if (action === 'print') {
+        window.print();
+      } else if (action === 'comment' && typeof CommentsEngine !== 'undefined') {
+        CommentsEngine.promptForCommentOnSelection();
+      }
+    });
+  });
 }
 
 function initHeaderInteractionFields() {
   const titleInput = document.querySelector('.doc-title');
   if (titleInput) {
     titleInput.addEventListener('change', () => {
-      const activeTab = ActiveDocumentData.currentTab;
-      ActiveDocumentData[activeTab].title = titleInput.value || 'Untitled document';
+      const activeTab = ActiveDocumentWorkspace.currentTab;
+      ActiveDocumentWorkspace[activeTab].title = titleInput.value || 'Untitled document';
       document.title = titleInput.value || 'Untitled document';
     });
   }
@@ -147,22 +152,25 @@ function initHeaderInteractionFields() {
 function initHistoryOverlayBindings() {
   const overlay = document.getElementById('version-history-view');
   const vhCanvas = document.getElementById('vh-canvas');
+  const openBtn = document.getElementById('history-open-btn');
   
+  const openHistory = () => {
+    HistoryEngine.renderVersionList();
+    const history = HistoryEngine.getHistory();
+    const currentIdx = HistoryEngine.getCurrentIndex();
+    if (history[currentIdx]) {
+      document.getElementById('vh-title-date').textContent = `${history[currentIdx].timestamp.toLocaleDateString()}, ${history[currentIdx].timestamp.toLocaleTimeString()}`;
+      HistoryEngine.renderReadOnlyPages(vhCanvas, history[currentIdx].content, history[currentIdx].isHandwritten);
+    }
+    overlay.hidden = false;
+  };
+
+  if (openBtn) openBtn.addEventListener('click', openHistory);
+
   window.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
       e.preventDefault();
-      if (overlay.hidden) {
-        HistoryEngine.renderVersionList();
-        const history = HistoryEngine.getHistory();
-        const currentIdx = HistoryEngine.getCurrentIndex();
-        if (history[currentIdx]) {
-          document.getElementById('vh-title-date').textContent = `${history[currentIdx].timestamp.toLocaleDateString()}, ${history[currentIdx].timestamp.toLocaleTimeString()}`;
-          HistoryEngine.renderReadOnlyPages(vhCanvas, history[currentIdx].content, history[currentIdx].isHandwritten);
-        }
-        overlay.hidden = false;
-      } else {
-        overlay.hidden = true;
-      }
+      overlay.hidden ? openHistory() : (overlay.hidden = true);
     }
   });
 
@@ -177,7 +185,12 @@ function initHistoryOverlayBindings() {
 document.addEventListener('DOMContentLoaded', () => {
   loadTabWorkspace('essay');
   initTabsLayoutController();
+  initToolbar();
   initHeaderInteractionFields();
   initHistoryOverlayBindings();
   seedSimulatedHistoryTimeline();
+  
+  if (typeof CommentsEngine !== 'undefined') {
+    CommentsEngine.bindSelectionListener();
+  }
 });
