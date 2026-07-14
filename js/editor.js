@@ -295,6 +295,6 @@ return {
     loadActiveTabContent,
     createNewTab,
     forceHydrateAllContent,
-    switchTab,          // <-- ADD THIS
-    getTabs             // <-- ADD THIS (already there but ensure it's included)
-};
+    switchTab
+  };
+})();
