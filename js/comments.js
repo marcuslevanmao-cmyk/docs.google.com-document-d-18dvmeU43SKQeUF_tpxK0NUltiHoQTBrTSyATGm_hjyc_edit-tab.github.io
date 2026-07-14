@@ -1,5 +1,5 @@
 /**
- * comments.js — Complete Contextual Annotation Engine
+ * comments.js — Contextual Annotation Engine
  */
 const CommentsEngine = (() => {
   const comments = new Map();
@@ -7,33 +7,38 @@ const CommentsEngine = (() => {
   let idCounter = 0;
 
   function bindSelectionListener() {
-    document.addEventListener('mouseup', () => {
+    document.getElementById('doc-canvas').addEventListener('mouseup', () => {
       const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+        pendingRange = null;
+        return;
+      }
 
       const range = sel.getRangeAt(0);
-      if (!range.toString().trim()) return;
+      if (!range.toString().trim()) {
+        pendingRange = null;
+        return;
+      }
 
       const node = range.commonAncestorContainer;
       const insidePage = node.nodeType === Node.ELEMENT_NODE ? node.closest('.doc-page') : node.parentElement?.closest('.doc-page');
       
       if (insidePage) {
         pendingRange = range.cloneRange();
+      } else {
+        pendingRange = null;
       }
     });
   }
 
   function promptForCommentOnSelection() {
-    if (!pendingRange) {
-      alert('Highlight a text section inside your document layout first!');
-      return;
-    }
+    // SILENT FAILURE OPERATION: If no active text selection ranges exist, exit execution loop with no popup alert
+    if (!pendingRange) return;
 
     const textQuote = pendingRange.toString();
     idCounter++;
     const cid = `comm_${idCounter}_${Date.now().toString().slice(-3)}`;
 
-    // Wrap selection visually immediately
     const span = document.createElement('span');
     span.className = 'comment-anchor active';
     span.dataset.commentId = cid;
@@ -46,10 +51,7 @@ const CommentsEngine = (() => {
       pendingRange.insertNode(span);
     }
 
-    // Clear document text selection lines
     window.getSelection().removeAllRanges();
-
-    // Render Context-Relative Input card inside right sidebar
     renderComposerCard(cid, textQuote);
   }
 
@@ -57,7 +59,6 @@ const CommentsEngine = (() => {
     const list = document.getElementById('comments-list');
     if (!list) return;
 
-    // Remove any unresolved composer cards to keep panel unified
     const existingComposer = list.querySelector('.comment-composer-card');
     if (existingComposer) existingComposer.remove();
 
@@ -71,7 +72,6 @@ const CommentsEngine = (() => {
       </div>
     `;
 
-    // Handle Cancel Action
     compCard.querySelector('[data-action="cancel"]').addEventListener('click', () => {
       document.querySelectorAll(`span[data-comment-id="${cid}"]`).forEach(el => {
         el.replaceWith(...el.childNodes);
@@ -80,7 +80,6 @@ const CommentsEngine = (() => {
       pendingRange = null;
     });
 
-    // Handle Save Action
     compCard.querySelector('[data-action="save"]').addEventListener('click', () => {
       const bodyText = compCard.querySelector('textarea').value.trim();
       if (!bodyText) return;
@@ -99,13 +98,17 @@ const CommentsEngine = (() => {
     const list = document.getElementById('comments-list');
     if (!list) return;
 
-    // Clear workspace list except active writing fields
     const activeComposer = list.querySelector('.comment-composer-card');
     list.innerHTML = '';
     if (activeComposer) list.appendChild(activeComposer);
 
     comments.forEach(c => {
       if (c.resolved) return;
+      
+      // Only render comments that match elements currently living inside active tab DOM canvas
+      const anchorExists = document.querySelector(`span[data-comment-id="${c.id}"]`);
+      if (!anchorExists) return;
+
       const card = document.createElement('div');
       card.className = 'comment-card';
       card.innerHTML = `
