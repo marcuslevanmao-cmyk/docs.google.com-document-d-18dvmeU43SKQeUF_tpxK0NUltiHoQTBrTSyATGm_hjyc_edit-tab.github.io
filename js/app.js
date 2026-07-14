@@ -136,6 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 10. Initial snapshot
-    HistoryEngine.captureSnapshot('Document session opened');
+    // 10. ❌ REMOVED: initial snapshot – no more "Document session opened"
+    // HistoryEngine.captureSnapshot('Document session opened');
 });
