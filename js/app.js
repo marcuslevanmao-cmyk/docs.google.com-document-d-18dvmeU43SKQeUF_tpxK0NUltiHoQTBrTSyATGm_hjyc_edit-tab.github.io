@@ -1,5 +1,5 @@
 /**
- * app.js — Document Core App State Management & Lifecycle Initializer
+ * app.js — Core State Framework Orchestrator
  */
 
 const ActiveDocumentWorkspace = {
@@ -72,8 +72,15 @@ function loadTabWorkspace(tabId) {
 function initTabsLayoutController() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'transparent';
+        b.style.borderColor = 'transparent';
+      });
+      
       btn.classList.add('active');
+      btn.style.background = '#fff';
+      btn.style.borderColor = 'var(--border-subtle)';
       
       const activeTab = ActiveDocumentWorkspace.currentTab;
       const pages = document.querySelectorAll('#doc-canvas .doc-page');
@@ -86,9 +93,9 @@ function initTabsLayoutController() {
 
 function seedSimulatedHistoryTimeline() {
   const historyList = HistoryEngine.getHistory();
-  historyList.length = 0; // Fresh clear
+  historyList.length = 0; 
 
-  // Snapshot 1: Early structural outline
+  // Snapshot 1: Early Outline
   HistoryEngine.forcePushCustomSnapshot({
     timestamp: new Date('May 12, 2026 09:14:00'),
     label: 'Initial Structural Outline Draft',
@@ -99,7 +106,7 @@ function seedSimulatedHistoryTimeline() {
     ]
   });
 
-  // Snapshot 2: Mid-day text additions
+  // Snapshot 2: Mid-day edits
   HistoryEngine.forcePushCustomSnapshot({
     timestamp: new Date('May 12, 2026 11:30:00'),
     label: 'Expanded Arguments & Sociological Foundations',
@@ -109,7 +116,7 @@ function seedSimulatedHistoryTimeline() {
     ]
   });
 
-  // Snapshot 3: Philosophical edits
+  // Snapshot 3: Polish pass
   HistoryEngine.forcePushCustomSnapshot({
     timestamp: new Date('May 12, 2026 14:45:00'),
     label: 'Philosophical Polish & Revision Cleanup Pass',
@@ -119,7 +126,6 @@ function seedSimulatedHistoryTimeline() {
     ]
   });
 
-  // Active production state representation checkpoint
   HistoryEngine.captureSnapshot('Current Workspace Production Checkpoint');
 }
 
@@ -182,6 +188,7 @@ function initHistoryOverlayBindings() {
   }
 }
 
+// Global initialization sequence wrapper
 document.addEventListener('DOMContentLoaded', () => {
   loadTabWorkspace('essay');
   initTabsLayoutController();
@@ -190,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHistoryOverlayBindings();
   seedSimulatedHistoryTimeline();
   
+  // Connect background hooks for existing modules safely
   if (typeof CommentsEngine !== 'undefined') {
     CommentsEngine.bindSelectionListener();
   }
