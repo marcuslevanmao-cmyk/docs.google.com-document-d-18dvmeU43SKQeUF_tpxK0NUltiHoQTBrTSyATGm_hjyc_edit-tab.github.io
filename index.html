@@ -35,16 +35,28 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- History Button -->
         <button class="icon-btn" id="history-btn" title="Open version history">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12h-2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8c2.05 0 3.93.78 5.35 2.05L14 9h7V2l-2.67 2.67C16.65 3.02 14.46 2 11.99 2zm.01 5v5l4.28 2.54.72-.72L13 11V7h-1z"/>
           </svg>
         </button>
+        
+        <!-- Comment History Button -->
+        <button class="icon-btn" title="Open comment history">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+
+        <!-- Share Button -->
         <button class="share-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
           Share
         </button>
-        <div class="anonymous-profile" title="Anonymous Profile">U</div>
+
+        <!-- Anonymous Capybara Profile -->
+        <div class="anonymous-profile" title="Anonymous Capybara">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+        </div>
       </div>
     </div>
     
@@ -123,14 +135,13 @@
 
   <div class="workspace-wrapper">
     <aside class="tabs-sidebar">
-      <div class="tabs-panel-title">Document Tabs</div>
-      <div class="tabs-container" id="tabs-container"></div>
-      <div style="padding: 0 16px; margin-top: auto;">
-        <button class="add-tab-btn" id="add-tab-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 4px; border: 1px dashed var(--border-strong); background: transparent; cursor: pointer; color: var(--text-secondary); font-size: 13px; font-weight: 500;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Tab
+      <div class="tabs-panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Document Tabs</span>
+        <button class="icon-btn" id="add-tab-btn" title="Add Tab" style="width: 24px; height: 24px; padding: 0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
+      <div class="tabs-container" id="tabs-container"></div>
     </aside>
 
     <main class="doc-canvas" id="doc-canvas">
@@ -155,7 +166,7 @@
   </div>
 </div>
 
-<div class="version-history-overlay" id="version-history-view" hidden>
+<div class="version-history-view" id="version-history-view" hidden>
   <div class="app-shell">
     <div class="vh-header">
       <button class="vh-back-btn" id="vh-back-btn" title="Close version history">
