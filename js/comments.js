@@ -1,17 +1,21 @@
+// js/comments.js
 /**
  * comments.js — Contextual Annotation Engine with Floating Margin Cards
  */
 const CommentsEngine = (() => {
-  const comments = new Map();          // Map<commentId, { id, tabId, quote, body, resolved, topOffset }>
-  let pendingRange = null;             // Currently selected range for a new comment
+  const comments = new Map();
+  let pendingRange = null;
   let idCounter = 0;
-  let activePopup = null;              // Reference to the floating composer element
+  let activePopup = null;
 
   // ------------------------------
   // 1. Selection Listener
   // ------------------------------
   function bindSelectionListener() {
-    document.getElementById('doc-canvas').addEventListener('mouseup', () => {
+    const canvas = document.getElementById('doc-canvas');
+    if (!canvas) return;
+
+    canvas.addEventListener('mouseup', () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
         pendingRange = null;
@@ -38,13 +42,19 @@ const CommentsEngine = (() => {
       }
       reflectAddCommentButtonState();
     });
+
+    // Clear selection on click outside
+    document.addEventListener('mousedown', (e) => {
+      if (!e.target.closest('.doc-page') && !e.target.closest('.comment-floating-composer')) {
+        pendingRange = null;
+        reflectAddCommentButtonState();
+      }
+    });
   }
 
   function reflectAddCommentButtonState() {
     const btn = document.getElementById('toolbar-comment-btn');
     if (btn) btn.disabled = !pendingRange;
-    const sidebarBtn = document.querySelector('.cs-empty-state .btn-primary');
-    if (sidebarBtn) sidebarBtn.disabled = !pendingRange;
   }
 
   // ------------------------------
@@ -99,13 +109,13 @@ const CommentsEngine = (() => {
       const activeTabId = EditorEngine.getActiveTabId();
       const canvasEl = document.getElementById('doc-canvas');
       const canvasRect = canvasEl.getBoundingClientRect();
-      const relativeTop = rangeRect.top - canvasRect.top;
+      const relativeTop = rangeRect.top - canvasRect.top + window.scrollY;
 
-      comments.set(cid, { 
-        id: cid, 
-        tabId: activeTabId, 
-        quote, 
-        body, 
+      comments.set(cid, {
+        id: cid,
+        tabId: activeTabId,
+        quote,
+        body,
         resolved: false,
         topOffset: relativeTop
       });
@@ -162,18 +172,20 @@ const CommentsEngine = (() => {
   function renderCommentCards() {
     const activeTabId = EditorEngine.getActiveTabId();
 
+    // Remove existing container if present
     let floatingContainer = document.getElementById('margin-comments-container');
-    if (!floatingContainer) {
-      floatingContainer = document.createElement('div');
-      floatingContainer.id = 'margin-comments-container';
-      floatingContainer.style.position = 'absolute';
-      floatingContainer.style.right = '-310px'; // Hang directly on the blank right side of the sheet page!
-      floatingContainer.style.top = '0';
-      floatingContainer.style.width = '280px';
-      floatingContainer.style.pointerEvents = 'auto';
-      document.getElementById('doc-canvas').appendChild(floatingContainer);
+    if (floatingContainer) {
+      floatingContainer.remove();
     }
-    floatingContainer.innerHTML = '';
+
+    floatingContainer = document.createElement('div');
+    floatingContainer.id = 'margin-comments-container';
+    floatingContainer.style.position = 'absolute';
+    floatingContainer.style.right = '-310px';
+    floatingContainer.style.top = '0';
+    floatingContainer.style.width = '280px';
+    floatingContainer.style.pointerEvents = 'auto';
+    document.getElementById('doc-canvas').appendChild(floatingContainer);
 
     const sidebarList = document.getElementById('comments-list');
     if (sidebarList) sidebarList.innerHTML = '';
@@ -191,8 +203,8 @@ const CommentsEngine = (() => {
     if (activeComments.length === 0) {
       if (sidebarList) {
         sidebarList.innerHTML = `
-          <div class="cs-empty-state" style="padding: 24px; text-align: center;">
-            <p style="color: var(--text-secondary); font-size: 14px;">No comments on this tab</p>
+          <div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 14px;">
+            No comments on this tab
           </div>
         `;
       }
@@ -200,28 +212,29 @@ const CommentsEngine = (() => {
     }
 
     activeComments.forEach(([key, c]) => {
+      // Margin card
       const card = document.createElement('div');
       card.className = 'comment-card';
       card.style.position = 'absolute';
       card.style.top = `${c.topOffset}px`;
       card.style.width = '260px';
-      card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
       card.style.background = '#fff';
       card.style.borderRadius = '8px';
       card.style.padding = '12px';
       card.style.border = '1px solid #dadce0';
+      card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
       card.style.zIndex = '10';
 
       card.innerHTML = `
-        <div class="comment-card-header" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <div class="comment-avatar" style="width:24px; height:24px; border-radius:50%; background:#1a73e8; color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold;">M</div>
-          <span class="comment-author" style="font-weight:600; font-size:13px; color:#202124;">Marcus Le Van Mao</span>
+        <div class="comment-card-header">
+          <div class="comment-avatar">M</div>
+          <span class="comment-author">Marcus Le Van Mao</span>
         </div>
-        <p class="comment-quote" style="font-size:12px; color:var(--text-secondary); border-left:2px solid #1a73e8; padding-left:6px; margin:0 0 6px 0; font-style:italic;">“${c.quote}”</p>
-        <p class="comment-body" style="font-size:13px; margin:0 0 10px 0; color:#202124;">${c.body}</p>
-        <div class="comment-actions" style="display:flex; gap:12px; font-size:12px;">
-          <button data-act="resolve" style="background:none; border:none; color:#1a73e8; cursor:pointer; font-weight:500; padding:0;">Resolve</button>
-          <button data-act="delete" style="background:none; border:none; color:#ea4335; cursor:pointer; font-weight:500; padding:0;">Delete</button>
+        <p class="comment-quote">“${c.quote}”</p>
+        <p class="comment-body">${c.body}</p>
+        <div class="comment-actions">
+          <button data-act="resolve">Resolve</button>
+          <button data-act="delete" class="delete-btn">Delete</button>
         </div>
       `;
 
@@ -232,6 +245,57 @@ const CommentsEngine = (() => {
         document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => el.classList.remove('active'));
       });
 
-      const handleResolve = () => {
+      card.querySelector('[data-act="resolve"]').addEventListener('click', () => {
         c.resolved = true;
-        document.querySelectorAll(`span
+        renderCommentCards();
+      });
+
+      card.querySelector('[data-act="delete"]').addEventListener('click', () => {
+        comments.delete(key);
+        removeAnchor(c.id);
+        renderCommentCards();
+      });
+
+      floatingContainer.appendChild(card);
+
+      // Sidebar list item
+      if (sidebarList) {
+        const listItem = document.createElement('div');
+        listItem.className = 'comment-card';
+        listItem.style.marginBottom = '10px';
+        listItem.innerHTML = `
+          <div class="comment-card-header">
+            <div class="comment-avatar">M</div>
+            <span class="comment-author">Marcus Le Van Mao</span>
+          </div>
+          <p class="comment-quote">“${c.quote}”</p>
+          <p class="comment-body">${c.body}</p>
+          <div class="comment-actions">
+            <button data-act="resolve-sidebar">Resolve</button>
+            <button data-act="delete-sidebar" class="delete-btn">Delete</button>
+          </div>
+        `;
+        listItem.querySelector('[data-act="resolve-sidebar"]').addEventListener('click', () => {
+          c.resolved = true;
+          renderCommentCards();
+        });
+        listItem.querySelector('[data-act="delete-sidebar"]').addEventListener('click', () => {
+          comments.delete(key);
+          removeAnchor(c.id);
+          renderCommentCards();
+        });
+        sidebarList.appendChild(listItem);
+      }
+    });
+  }
+
+  // ------------------------------
+  // 4. Public API
+  // ------------------------------
+  return {
+    bindSelectionListener,
+    promptForCommentOnSelection,
+    renderCommentCards,
+    closePopup
+  };
+})();
