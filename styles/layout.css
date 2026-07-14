@@ -277,9 +277,9 @@ html, body {
 .comments-sidebar {
     position: absolute;
     right: 0;
-    top: 60px; /* Adjust based on your header height */
+    top: 0;
     width: 300px;
-    height: calc(100% - 60px);
+    height: 100%;
     background: white;
     border-left: 1px solid #dadce0;
     display: flex;
