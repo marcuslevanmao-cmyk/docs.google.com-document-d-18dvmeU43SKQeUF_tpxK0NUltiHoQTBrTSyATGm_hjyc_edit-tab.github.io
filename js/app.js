@@ -160,3 +160,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   HistoryEngine.captureSnapshot('Document session opened');
 });
+// Add this inside app.js so history.js can restore the full workspace
+
+window.restoreFullDocumentState = function(savedTabsState) {
+    // 1. Overwrite your live tabs array with the deep copy from history
+    appTabs = JSON.parse(JSON.stringify(savedTabsState)); 
+    
+    // 2. Re-render your main UI tabs sidebar
+    renderMainAppTabs(); 
+
+    // 3. Select the first tab and render its content to the main canvas
+    if (appTabs.length > 0) {
+        openTab(appTabs[0].id);
+    }
+};
+
+// Whenever a change is saved (e.g., auto-save loop or Ctrl+S), just call:
+// saveVersionToHistory(appTabs);
