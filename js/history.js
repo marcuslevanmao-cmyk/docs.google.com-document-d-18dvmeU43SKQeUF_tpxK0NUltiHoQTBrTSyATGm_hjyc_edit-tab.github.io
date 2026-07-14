@@ -1,24 +1,48 @@
 // history.js — Complete Version History Engine with localStorage persistence
 
-// ============================================================
-// 1. LOCAL STORAGE HELPERS
-// ============================================================
+const STORAGE_KEY = 'doc_history_v3';
 
-// Changed key to 'doc_history_v2' to force a clean slate and avoid white-page errors
-const STORAGE_KEY = 'doc_history_v2';
+// Clean, rich starting text for Version 0 so your document is never empty!
+const initialDocContent = `<div style="font-family: 'Times New Roman', Times, serif; font-size: 16px; line-height: 1.6;">
+  <p>Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature, our need for belonging, our search for meaning, and our desire for ethical guidance. Religion has been one of humanity's most effective systems for organizing communities and transmitting values, not because of the certainty of its supernatural claims, but because of its unparalleled ability to unite people and inspire moral action.</p>
+  <p>Religion has long served as one of humanity's most influential systems for moral education. Christianity, for example, spread complex ethical teachings through parables. These simple stories could be understood and remembered by children, farmers, and kings alike. Values like charity, forgiveness, and sacrifice were taught as absolute truths.</p>
+</div>`;
+
+function getInitialHistory() {
+    const now = new Date();
+    const hours = now.getHours();
+    const mins = now.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
+    const displayHour = hours % 12 || 12;
+    const displayDate = `${now.toLocaleString('en', { month: 'short' })} ${now.getDate()}, ${displayHour}:${mins} ${ampm}`;
+    
+    return [{
+        id: 1,
+        dateObj: now,
+        displayDate: displayDate,
+        dayGroup: now.toLocaleString('en', { weekday: 'long' }),
+        author: "You",
+        authorColor: "#1a73e8",
+        description: "Document opened",
+        tabsState: [
+            {
+                id: "tab_1",
+                title: "The Wasted Potential of Religion",
+                content: initialDocContent
+            }
+        ]
+    }];
+}
 
 function loadHistoryFromStorage() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
-            // Convert date strings back to Date objects
-            parsed.forEach(v => {
-                v.dateObj = new Date(v.dateObj);
-            });
+            parsed.forEach(v => { v.dateObj = new Date(v.dateObj); });
             return parsed;
         } catch (e) {
-            console.warn('Failed to parse stored history, using default.');
+            console.warn('Failed to parse stored history.');
         }
     }
     return null;
@@ -32,14 +56,8 @@ function saveHistoryToStorage(history) {
     }
 }
 
-// Load history or use a clean slate array
-let documentHistory = loadHistoryFromStorage() || [];
-// Save the loaded/default history to storage so it's persisted
+let documentHistory = loadHistoryFromStorage() || getInitialHistory();
 saveHistoryToStorage(documentHistory);
-
-// ============================================================
-// 2. HISTORY ENGINE
-// ============================================================
 
 const HistoryEngine = (() => {
     let _history = documentHistory;
@@ -71,8 +89,8 @@ const HistoryEngine = (() => {
             displayDate: displayDate,
             dayGroup: dayGroup,
             author: "You",
-            authorColor: "#4285f4",
-            description: description || "Auto-saved snapshot", // Removed the "Edited: " prefix
+            authorColor: "#1a73e8",
+            description: description || "Edited",
             tabsState: _getCurrentTabsState()
         };
     }
@@ -81,7 +99,7 @@ const HistoryEngine = (() => {
         const snapshot = _createSnapshot(description);
         _history.unshift(snapshot);
         if (_history.length > 50) _history.pop();
-        saveHistoryToStorage(_history);   // persist
+        saveHistoryToStorage(_history);
         renderHistorySidebar();
         return snapshot;
     }
@@ -111,20 +129,7 @@ const HistoryEngine = (() => {
             const tabsState = version.tabsState;
             if (!tabsState || tabsState.length === 0) return;
 
-            const liveTabs = EditorEngine.getTabs();
-            liveTabs.length = 0;
-            tabsState.forEach((tabState, idx) => {
-                const newTab = {
-                    id: tabState.id || `tab_${Date.now()}_${idx}`,
-                    title: tabState.title || `Tab ${idx + 1}`,
-                    htmlContent: tabState.content || '<div></div>'
-                };
-                liveTabs.push(newTab);
-            });
-
-            EditorEngine.renderTabsSidebar();
-            EditorEngine.loadActiveTabContent();
-
+            window.restoreFullDocumentState(tabsState);
             document.getElementById('version-history-view').hidden = true;
             _saveSnapshot(`Restored to version from ${version.displayDate}`);
         },
@@ -134,12 +139,8 @@ const HistoryEngine = (() => {
     };
 })();
 
-// ============================================================
-// 3. RENDER FUNCTIONS
-// ============================================================
-
 let currentlyPreviewingVersionId = null;
-let currentlyPreviewingTabId = 'tab1';
+let currentlyPreviewingTabId = 'tab_1';
 
 function renderHistorySidebar() {
     const listContainer = document.getElementById('version-list');
@@ -163,7 +164,7 @@ function renderHistorySidebar() {
                 <div class="vh-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
                 <div class="vh-item-content">
                     <div class="vh-item-time">${version.displayDate}</div>
-                    <div class="vh-item-subtitle" style="font-style: italic; margin-bottom: 4px;">${version.description}</div>
+                    <div class="vh-item-subtitle" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">${version.description}</div>
                     <div class="vh-item-author-row">
                         <div class="vh-author-dot" style="background-color: ${version.authorColor};"></div>
                         <span style="color: ${version.authorColor}; font-weight: 500;">${version.author}</span>
@@ -239,12 +240,10 @@ function previewVersion(versionId) {
     if (totalSpan) totalSpan.textContent = `Total: ${documentHistory.length} edits`;
 }
 
-// Public save function (used by editor)
 function saveVersionToHistory(description) {
     return HistoryEngine.captureSnapshot(description);
 }
 
-// Restore from saved tabs (used by history restore)
 window.restoreFullDocumentState = function(savedTabsState) {
     const liveTabs = EditorEngine.getTabs();
     liveTabs.length = 0;
@@ -259,10 +258,6 @@ window.restoreFullDocumentState = function(savedTabsState) {
     EditorEngine.renderTabsSidebar();
     EditorEngine.loadActiveTabContent();
 };
-
-// ============================================================
-// 4. INITIALIZATION
-// ============================================================
 
 function initHistory() {
     renderHistorySidebar();
