@@ -1,31 +1,29 @@
 /**
- * history.js — Chronological State Timeline Manager
+ * history.js — The State Timeline Engine
  */
 const HistoryEngine = (() => {
   let currentVersionIndex = -1;
-  const versionHistory = []; 
+  const versionHistory = []; // [{ timestamp: Date, content: string[], label: string, isHandwritten: boolean }]
 
   let snapshotTimer = null;
   const SNAPSHOT_DEBOUNCE_MS = 4000;
 
   function readPagesContent() {
-    const pages = document.querySelectorAll('#doc-canvas .doc-page');
+    const pages = document.querySelectorAll('.doc-page');
     return Array.from(pages).map((p) => p.innerHTML);
   }
 
-  function captureSnapshot(label, targetDate = null, isHandwritten = false) {
+  function captureSnapshot(label, customDate = null, isHandwritten = false) {
     const content = readPagesContent();
-    if (content.length === 0 || (content.length === 1 && content[0].trim() === '')) return;
-
     const last = versionHistory[versionHistory.length - 1];
     if (last && JSON.stringify(last.content) === JSON.stringify(content)) {
       return;
     }
 
     versionHistory.push({
-      timestamp: targetDate || new Date(),
+      timestamp: customDate || new Date(),
       content,
-      label: label || `${content.length} page workspace snapshot`,
+      label: label || `${content.length} page${content.length === 1 ? '' : 's'}`,
       isHandwritten: isHandwritten
     });
     currentVersionIndex = versionHistory.length - 1;
@@ -51,6 +49,7 @@ const HistoryEngine = (() => {
     if (!version) return;
     currentVersionIndex = index;
     
+    // Restore content cleanly to modern dynamic pages
     const canvas = document.getElementById('doc-canvas');
     canvas.innerHTML = '';
     
@@ -61,6 +60,7 @@ const HistoryEngine = (() => {
       page.setAttribute('spellcheck', 'true');
       page.innerHTML = html;
       
+      // If the restored history element was a handwritten draft, match style constraints
       if (version.isHandwritten) {
         page.classList.add('handwritten-draft');
       }
@@ -96,9 +96,8 @@ const HistoryEngine = (() => {
 
     let lastGroupLabel = '';
 
-    // Create a safe shallow reversed index traversal loop
-    for (let i = versionHistory.length - 1; i >= 0; i--) {
-      const v = versionHistory[i];
+    versionHistory.asReversed().forEach((v) => {
+      const originalIndex = versionHistory.indexOf(v);
       const groupLabel = formatDateLabel(v.timestamp);
 
       if (groupLabel !== lastGroupLabel) {
@@ -109,7 +108,7 @@ const HistoryEngine = (() => {
         lastGroupLabel = groupLabel;
       }
 
-      const isCurrent = (i === currentVersionIndex);
+      const isCurrent = (originalIndex === currentVersionIndex);
       const item = document.createElement('div');
       item.className = `version-item ${isCurrent ? 'current' : ''}`;
       
@@ -118,20 +117,16 @@ const HistoryEngine = (() => {
           <div class="version-time">${formatTime(v.timestamp)}</div>
         </div>
         <div class="version-author" style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-          ${v.label} ${v.isHandwritten ? '✍️' : ''}
+          ${v.label} ${v.isHandwritten ? '✍️ (Draft layout)' : ''}
         </div>
       `;
 
       item.addEventListener('click', () => {
-        currentVersionIndex = i;
+        rollbackToVersion(originalIndex);
         document.getElementById('vh-title-date').textContent = `${formatDateLabel(v.timestamp)}, ${formatTime(v.timestamp)}`;
-        renderVersionList();
-        
-        const vhCanvas = document.getElementById('vh-canvas');
-        renderReadOnlyPages(vhCanvas, v.content, v.isHandwritten);
       });
       list.appendChild(item);
-    }
+    });
   }
 
   function renderReadOnlyPages(container, content, isHandwritten = false) {
