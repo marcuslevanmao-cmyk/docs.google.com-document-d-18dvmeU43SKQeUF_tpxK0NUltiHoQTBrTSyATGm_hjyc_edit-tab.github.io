@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addTabBtn.addEventListener('click', () => EditorEngine.createNewTab());
   }
 
-  // Connect completely extended toolbar action listeners (execCommand integration)
+  // Connect formatting toolbar action listeners
   document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
@@ -56,11 +56,63 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- NEW: Font Size Control Listeners ---
+  const decBtn = document.getElementById('decrease-size-btn');
+  const incBtn = document.getElementById('increase-size-btn');
+  const sizeInput = document.querySelector('.font-size-input');
+
+  if (decBtn && incBtn && sizeInput) {
+    const applyFontSize = (newSize) => {
+      sizeInput.value = newSize;
+      
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0 && !selection.isCollapsed) {
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        span.style.fontSize = `${newSize}px`;
+        try {
+          range.surroundContents(span);
+          HistoryEngine.captureSnapshot(`Changed font size to ${newSize}px`);
+        } catch (e) {
+          // Fallback structure to replace native formatting tags if multi-line is highlighted
+          document.execCommand('fontSize', false, '3');
+          const fontElements = document.getElementsByTagName("font");
+          for (let i = 0; i < fontElements.length; i++) {
+            if (fontElements[i].size === "3") {
+              fontElements[i].removeAttribute("size");
+              fontElements[i].style.fontSize = `${newSize}px`;
+            }
+          }
+          HistoryEngine.captureSnapshot(`Changed font size to ${newSize}px`);
+        }
+      }
+    };
+
+    decBtn.addEventListener('click', () => {
+      let size = parseInt(sizeInput.value) || 11;
+      if (size > 6) applyFontSize(size - 1);
+    });
+
+    incBtn.addEventListener('click', () => {
+      let size = parseInt(sizeInput.value) || 11;
+      if (size < 72) applyFontSize(size + 1);
+    });
+
+    sizeInput.addEventListener('change', () => {
+      let size = parseInt(sizeInput.value) || 11;
+      if (size >= 6 && size <= 72) {
+        applyFontSize(size);
+      }
+    });
+  }
+
+  // Comment Creation Handler
   const commentBtn = document.getElementById('toolbar-comment-btn');
   if (commentBtn) {
     commentBtn.addEventListener('click', () => CommentsEngine.promptForCommentOnSelection());
   }
 
+  // Version History Engine Wire-up
   const historyBtn = document.getElementById('history-btn');
   const vhOverlay = document.getElementById('version-history-view');
   const vhBackBtn = document.getElementById('vh-back-btn');
