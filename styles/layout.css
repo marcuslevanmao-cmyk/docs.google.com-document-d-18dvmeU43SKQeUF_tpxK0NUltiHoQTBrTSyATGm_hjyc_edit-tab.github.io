@@ -33,7 +33,7 @@ html, body {
   flex-direction: column;
 }
 
-/* ---------- App Header & Toolbars ---------- */
+/* ---------- App Shell Layout Structure ---------- */
 .app-header {
   flex: 0 0 auto;
   background: var(--header-bg);
@@ -48,19 +48,21 @@ html, body {
   position: relative;
 }
 
-/* Document Tabs Sidebar Layout */
+/* Tab Navigation Sidebar Container */
 .tabs-sidebar {
   flex: 0 0 var(--tabs-width);
   width: var(--tabs-width);
-  background: var(--canvas-bg);
+  background: #ffffff;
   border-right: 1px solid var(--border-subtle);
-  padding: 12px 12px 0;
+  padding: 16px 12px;
   overflow-y: auto;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .tabs-sidebar[hidden] { display: none; }
 
-/* Document Scrolling Canvas Surface */
+/* Central Document Canvas Scroll Viewport */
 .doc-canvas {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -72,7 +74,7 @@ html, body {
   scroll-behavior: smooth;
 }
 
-/* Right Margin Comment Stream Panel */
+/* Right Comments Stream Sidebar Panel */
 .side-panel {
   flex: 0 0 auto;
   overflow-y: auto;
@@ -83,11 +85,11 @@ html, body {
   .tabs-sidebar { display: none; }
 }
 
-/* ---------- Chronological History Interface Overlay ---------- */
+/* ---------- Fullscreen Version History Modal Overlay ---------- */
 .version-history-view {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 2000;
   background: #fff;
   display: flex;
   flex-direction: column;
@@ -115,7 +117,7 @@ html, body {
   overflow-y: auto;
 }
 
-/* ---------- Ink Simulation Rules For Historical Drafts ---------- */
+/* ---------- Historical Ink Simulation Styling Rules ---------- */
 .handwritten-draft {
   font-family: "Comic Sans MS", "Chalkboard SE", "Marker Felt", cursive !important;
   color: #1a3aa3 !important;
