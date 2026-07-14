@@ -1,6 +1,6 @@
 // history.js — Complete Version History Engine with localStorage persistence
 
-const STORAGE_KEY = 'doc_history_v4';
+const STORAGE_KEY = 'doc_history_v5';
 
 // Real content blocks for Marcus's revisions
 const marcusInitialContent = `<div style="font-family: 'Times New Roman', Times, serif; font-size: 16px; line-height: 1.6;">
@@ -17,7 +17,9 @@ const marcusFinalContent = `<div style="font-family: 'Times New Roman', Times, s
   <p>Religion has long served as one of humanity's most influential systems for moral education. Christianity, for example, spread complex ethical teachings through parables. These simple stories could be understood and remembered by children, farmers, and kings alike. Values like charity, forgiveness, and sacrifice were taught as absolute truths.</p>
 </div>`;
 
-// Set up the high-fidelity historical list for Marcus Le Van Mao
+// Global scope tracker so all functions can safely access preview selection
+let selectedPreviewIndex = 0;
+
 function getInitialHistory() {
     return [
         {
@@ -98,7 +100,6 @@ saveHistoryToStorage(documentHistory);
 
 const HistoryEngine = (() => {
     let _history = documentHistory;
-    let _selectedPreviewIndex = 0;
     let _snapshotTimeout = null;
     let _nextId = _history.length > 0 ? Math.max(..._history.map(v => v.id)) + 1 : 1;
 
@@ -152,13 +153,13 @@ const HistoryEngine = (() => {
             }, 1500);
         },
         previewSnapshot(index) {
-            _selectedPreviewIndex = index;
+            selectedPreviewIndex = index;
             const version = _history[index];
             if (!version) return;
             previewVersion(version.id);
         },
         getSelectedPreviewIndex() {
-            return _selectedPreviewIndex;
+            return selectedPreviewIndex;
         },
         rollbackTo(index) {
             const version = _history[index];
@@ -167,7 +168,8 @@ const HistoryEngine = (() => {
             if (!tabsState || tabsState.length === 0) return;
 
             window.restoreFullDocumentState(tabsState);
-            document.getElementById('version-history-view').hidden = true;
+            const vhOverlay = document.getElementById('version-history-view');
+            if (vhOverlay) vhOverlay.hidden = true;
             _saveSnapshot(`Restored to version from ${version.displayDate}`);
         },
         getHistory() {
@@ -195,7 +197,7 @@ function renderHistorySidebar() {
             listContainer.appendChild(dayHeader);
         }
 
-        const isCurrent = index === _selectedPreviewIndex;
+        const isCurrent = index === selectedPreviewIndex;
         const itemHtml = `
             <div class="vh-item ${isCurrent ? 'active' : ''}" data-id="${version.id}">
                 <div class="vh-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
@@ -216,7 +218,7 @@ function renderHistorySidebar() {
         itemEl.addEventListener('click', () => {
             document.querySelectorAll('.vh-item').forEach(i => i.classList.remove('active'));
             itemEl.classList.add('active');
-            _selectedPreviewIndex = index;
+            selectedPreviewIndex = index;
             previewVersion(version.id);
         });
         listContainer.appendChild(itemEl);
@@ -228,7 +230,8 @@ function previewVersion(versionId) {
     if (!version) return;
 
     currentlyPreviewingVersionId = version.id;
-    document.getElementById('vh-top-date-title').textContent = version.displayDate;
+    const dateTitle = document.getElementById('vh-top-date-title');
+    if (dateTitle) dateTitle.textContent = version.displayDate;
 
     const tabsContainer = document.getElementById('vh-tabs-container');
     if (!tabsContainer) return;
