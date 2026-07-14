@@ -1,3 +1,4 @@
+/* styles/components.css */
 .header-top {
   display: flex;
   align-items: center;
@@ -38,12 +39,12 @@
 
 .header-actions { display: flex; align-items: center; gap: 12px; }
 
-.icon-btn, .toolbar-btn, .vh-back-btn {
+.icon-btn, .toolbar-btn {
   width: 32px; height: 32px; background: transparent; border: none;
   border-radius: 4px; color: var(--text-secondary); display: inline-flex;
   align-items: center; justify-content: center; cursor: pointer;
 }
-.icon-btn:hover, .toolbar-btn:hover, .vh-back-btn:hover {
+.icon-btn:hover, .toolbar-btn:hover {
   background: rgba(60,64,67,0.08); color: var(--text-primary);
 }
 
@@ -54,7 +55,6 @@
 }
 .share-btn:hover { background: #b3dbf2; }
 
-/* Authentic Colored Anonymous User Avatar Component */
 .anonymous-profile {
   width: 34px;
   height: 34px;
@@ -68,7 +68,6 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
-/* Dense Google Docs Toolbar Layout Architecture */
 .toolbar {
   display: flex;
   align-items: center;
@@ -114,7 +113,6 @@
 
 .page-number { font-size: 11px; color: var(--text-secondary); margin: 8px 0 24px; text-align: center; width: 100%; }
 
-/* Dynamic Rename Tab Item Row Component */
 .tab-item-row {
   display: flex;
   align-items: center;
@@ -159,30 +157,3 @@
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .add-tab-btn:hover { background: rgba(26,115,232,0.04); border-color: var(--accent-blue); }
-
-.ruler { width: var(--page-width); height: var(--ruler-h); background: #ffffff; position: relative; margin-bottom: 4px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
-.ruler-track { position: relative; width: 100%; height: 100%; }
-.ruler-face { width: 100%; height: 100%; background: #f1f3f4; }
-.ruler-margin-marker { position: absolute; top: 0; width: 6px; height: 100%; background: var(--accent-blue); opacity: 0.4; }
-
-.vh-header { display: flex; align-items: center; gap: 14px; padding: 12px 20px; background: #ffffff; border-bottom: 1px solid var(--border-strong); }
-.vh-title { font-size: 18px; font-weight: 500; flex: 1; }
-.restore-action-btn {
-  background: var(--accent-blue); color: #ffffff; border: none; padding: 8px 16px;
-  font-size: 14px; font-weight: 500; border-radius: 4px; cursor: pointer;
-}
-.restore-action-btn:hover { background: #1557b0; }
-.vh-subbar { padding: 8px 20px; background: #f1f3f4; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid var(--border-strong); }
-
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-  display: flex; align-items: center; justify-content: center; z-index: 200;
-}
-.modal-overlay[hidden] { display: none; }
-.modal-card {
-  background: #ffffff; padding: 24px; border-radius: 8px; width: 440px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-}
-.modal-card h3 { margin: 0 0 12px 0; font-size: 18px; font-weight: 500; }
-.modal-card p { margin: 0 0 24px 0; font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
