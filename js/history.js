@@ -1,9 +1,9 @@
 /**
- * history.js — Chronological Versioning Database Layout Manager
+ * history.js — Chronological State Timeline Manager
  */
 const HistoryEngine = (() => {
   let currentVersionIndex = -1;
-  const versionHistory = []; // Snapshots storage: [{ timestamp: Date, content: string[], label: string, isHandwritten: boolean }]
+  const versionHistory = []; 
 
   let snapshotTimer = null;
   const SNAPSHOT_DEBOUNCE_MS = 4000;
@@ -96,8 +96,9 @@ const HistoryEngine = (() => {
 
     let lastGroupLabel = '';
 
-    versionHistory.asReversed().forEach((v) => {
-      const originalIndex = versionHistory.indexOf(v);
+    // Create a safe shallow reversed index traversal loop
+    for (let i = versionHistory.length - 1; i >= 0; i--) {
+      const v = versionHistory[i];
       const groupLabel = formatDateLabel(v.timestamp);
 
       if (groupLabel !== lastGroupLabel) {
@@ -108,7 +109,7 @@ const HistoryEngine = (() => {
         lastGroupLabel = groupLabel;
       }
 
-      const isCurrent = (originalIndex === currentVersionIndex);
+      const isCurrent = (i === currentVersionIndex);
       const item = document.createElement('div');
       item.className = `version-item ${isCurrent ? 'current' : ''}`;
       
@@ -122,7 +123,7 @@ const HistoryEngine = (() => {
       `;
 
       item.addEventListener('click', () => {
-        currentVersionIndex = originalIndex;
+        currentVersionIndex = i;
         document.getElementById('vh-title-date').textContent = `${formatDateLabel(v.timestamp)}, ${formatTime(v.timestamp)}`;
         renderVersionList();
         
@@ -130,7 +131,7 @@ const HistoryEngine = (() => {
         renderReadOnlyPages(vhCanvas, v.content, v.isHandwritten);
       });
       list.appendChild(item);
-    });
+    }
   }
 
   function renderReadOnlyPages(container, content, isHandwritten = false) {
