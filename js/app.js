@@ -1,17 +1,11 @@
-// js/app.js
-/**
- * app.js — App Orchestrator
- */
+// js/app.js (unchanged, but included for completeness)
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Init editor
   EditorEngine.renderTabsSidebar();
   EditorEngine.loadActiveTabContent();
   CommentsEngine.bindSelectionListener();
 
-  // 2. Add tab button
   document.getElementById('add-tab-btn')?.addEventListener('click', () => EditorEngine.createNewTab());
 
-  // 3. Formatting toolbar
   document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
@@ -33,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 4. Font & style dropdowns
   document.querySelector('select[title="Font"]')?.addEventListener('change', (e) => {
     document.execCommand('fontName', false, e.target.value);
     HistoryEngine.captureSnapshot(`Font: ${e.target.value}`);
@@ -44,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     HistoryEngine.captureSnapshot(`Style: ${e.target.value}`);
   });
 
-  // 5. Font size controls
   const dec = document.getElementById('decrease-size-btn');
   const inc = document.getElementById('increase-size-btn');
   const sizeIn = document.querySelector('.font-size-input');
@@ -83,10 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 6. Comment button (toolbar)
   document.getElementById('toolbar-comment-btn')?.addEventListener('click', () => CommentsEngine.promptForCommentOnSelection());
 
-  // 7. Comments sidebar toggle
   const commentBtn = document.getElementById('comment-btn');
   const commentsSidebar = document.getElementById('comments-sidebar');
   const closeComments = document.getElementById('close-comments-btn');
@@ -101,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
     closeComments.addEventListener('click', () => { commentsSidebar.hidden = true; });
   }
 
-  // 8. History toggle
   const historyBtn = document.getElementById('history-btn');
   const vhOverlay = document.getElementById('version-history-view');
   const vhBack = document.getElementById('vh-back-btn');
@@ -109,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
     historyBtn.addEventListener('click', () => {
       if (commentsSidebar) commentsSidebar.hidden = true;
       vhOverlay.hidden = false;
-      // Re-render history to ensure it's fresh
       renderHistorySidebar();
       HistoryEngine.previewSnapshot(0);
     });
@@ -118,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
     vhBack.addEventListener('click', () => { vhOverlay.hidden = true; });
   }
 
-  // 9. Restore modal
   const confirmModal = document.getElementById('confirm-modal');
   const restoreBtn = document.getElementById('vh-restore-trigger-btn');
   const cancelBtn = document.getElementById('modal-cancel-btn');
@@ -138,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 10. Click outside to close comments
   document.addEventListener('click', (e) => {
     if (commentsSidebar && !commentsSidebar.hidden) {
       const isCommentBtn = e.target.closest('#comment-btn');
