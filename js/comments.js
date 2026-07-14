@@ -1,8 +1,8 @@
 /**
- * comments.js — Contextual Annotation Engine with Floating Composer
+ * comments.js — Contextual Annotation Engine with Floating Cards on the Margin
  */
 const CommentsEngine = (() => {
-  const comments = new Map();          // Map<commentId, { id, quote, body, resolved }>
+  const comments = new Map();          // Map<commentId, { id, tabId, quote, body, resolved, topOffset }>
   let pendingRange = null;             // Currently selected range for a new comment
   let idCounter = 0;
   let activePopup = null;              // Reference to the floating composer element
@@ -40,20 +40,17 @@ const CommentsEngine = (() => {
     });
   }
 
-  // Enable/disable the toolbar comment button based on selection
   function reflectAddCommentButtonState() {
     const btn = document.getElementById('toolbar-comment-btn');
     if (btn) btn.disabled = !pendingRange;
-    // Also update any "Add comment" button in the sidebar empty state
     const sidebarBtn = document.querySelector('.cs-empty-state .btn-primary');
     if (sidebarBtn) sidebarBtn.disabled = !pendingRange;
   }
 
   // ------------------------------
-  // 2. Floating Composer
+  // 2. Floating Composer (Google Docs Style)
   // ------------------------------
   function showFloatingComposer(cid, quote, rangeRect) {
-    // Remove any existing popup
     if (activePopup) {
       activePopup.remove();
       activePopup = null;
@@ -62,9 +59,8 @@ const CommentsEngine = (() => {
     const popup = document.createElement('div');
     popup.className = 'comment-floating-composer';
     popup.style.position = 'fixed';
-    // Position near the selection – slightly below and to the left
     popup.style.left = Math.min(rangeRect.left, window.innerWidth - 360) + 'px';
-    popup.style.top = (rangeRect.bottom + 10) + 'px';
+    popup.style.top = (rangeRect.bottom + window.scrollY + 10) + 'px';
     popup.style.width = '340px';
     popup.style.zIndex = '1000';
     popup.innerHTML = `
@@ -86,33 +82,37 @@ const CommentsEngine = (() => {
     const textarea = popup.querySelector('textarea');
     textarea.focus();
 
-    // Cancel
-    popup.querySelector('.cancel-btn').addEventListener('click', () => {
+    const cleanUp = () => {
       removeAnchor(cid);
       closePopup();
       pendingRange = null;
       reflectAddCommentButtonState();
-    });
+    };
 
-    // Close button (×)
-    popup.querySelector('.close-popup-btn').addEventListener('click', () => {
-      removeAnchor(cid);
-      closePopup();
-      pendingRange = null;
-      reflectAddCommentButtonState();
-    });
+    popup.querySelector('.cancel-btn').addEventListener('click', cleanUp);
+    popup.querySelector('.close-popup-btn').addEventListener('click', cleanUp);
 
-    // Save
     popup.querySelector('.save-btn').addEventListener('click', () => {
       const body = textarea.value.trim();
       if (!body) return;
 
-      // Store the comment
-      comments.set(cid, { id: cid, quote, body, resolved: false });
+      const activeTabId = EditorEngine.getActiveTabId();
+      
+      // Calculate layout offset relative to doc-canvas
+      const canvasEl = document.getElementById('doc-canvas');
+      const canvasRect = canvasEl.getBoundingClientRect();
+      const relativeTop = rangeRect.top - canvasRect.top;
 
-      // Refresh the sidebar list
+      comments.set(cid, { 
+        id: cid, 
+        tabId: activeTabId, 
+        quote, 
+        body, 
+        resolved: false,
+        topOffset: relativeTop
+      });
+
       renderCommentCards();
-
       closePopup();
       pendingRange = null;
       reflectAddCommentButtonState();
@@ -126,7 +126,6 @@ const CommentsEngine = (() => {
     }
   }
 
-  // Remove the comment anchor span (if comment is cancelled)
   function removeAnchor(cid) {
     document.querySelectorAll(`span[data-comment-id="${cid}"]`).forEach(el => {
       el.replaceWith(...el.childNodes);
@@ -134,7 +133,7 @@ const CommentsEngine = (() => {
   }
 
   // ------------------------------
-  // 3. Public: Prompt for Comment
+  // 3. Prompt selection
   // ------------------------------
   function promptForCommentOnSelection() {
     if (!pendingRange) return;
@@ -142,11 +141,9 @@ const CommentsEngine = (() => {
     const textQuote = pendingRange.toString().trim();
     if (!textQuote) return;
 
-    // Create a unique ID for this comment
     idCounter++;
     const cid = `comm_${idCounter}_${Date.now().toString().slice(-3)}`;
 
-    // Wrap the selected text with a comment anchor span
     const span = document.createElement('span');
     span.className = 'comment-anchor active';
     span.dataset.commentId = cid;
@@ -154,37 +151,44 @@ const CommentsEngine = (() => {
     try {
       pendingRange.surroundContents(span);
     } catch (e) {
-      // Fallback if range spans multiple nodes
       const frag = pendingRange.extractContents();
       span.appendChild(frag);
       pendingRange.insertNode(span);
     }
 
-    // Clear the selection
+    const rect = span.getBoundingClientRect();
     window.getSelection().removeAllRanges();
-
-    // Get the bounding rect of the range for positioning the popup
-    const rect = pendingRange.getBoundingClientRect();
-    // Reset pendingRange so we don't reuse it (but we need the rect)
-    pendingRange = null;
     showFloatingComposer(cid, textQuote, rect);
-    reflectAddCommentButtonState();
   }
 
   // ------------------------------
-  // 4. Render Comments in Sidebar
+  // 4. Floating Margin Cards & Sidebar Synced Rendering
   // ------------------------------
   function renderCommentCards() {
-    const list = document.getElementById('comments-list');
-    if (!list) return;
+    const activeTabId = EditorEngine.getActiveTabId();
 
-    // Remove any existing content
-    list.innerHTML = '';
+    // Clear and build the dynamic floating container off to the side of the page
+    let floatingContainer = document.getElementById('margin-comments-container');
+    if (!floatingContainer) {
+      floatingContainer = document.createElement('div');
+      floatingContainer.id = 'margin-comments-container';
+      floatingContainer.style.position = 'absolute';
+      floatingContainer.style.right = 'calc(50% - 730px)'; // Positions it neatly in the right canvas margin
+      floatingContainer.style.top = '0';
+      floatingContainer.style.width = '280px';
+      floatingContainer.style.pointerEvents = 'auto';
+      document.getElementById('doc-canvas').appendChild(floatingContainer);
+    }
+    floatingContainer.innerHTML = '';
 
-    // Collect active (non-resolved) comments that still have an anchor in the doc
+    // Clear Sidebar organizing list
+    const sidebarList = document.getElementById('comments-list');
+    if (sidebarList) sidebarList.innerHTML = '';
+
+    // Get active comments belonging to the CURRENT active tab
     const activeComments = [];
     comments.forEach((c, key) => {
-      if (!c.resolved) {
+      if (!c.resolved && c.tabId === activeTabId) {
         const anchorExists = document.querySelector(`span[data-comment-id="${c.id}"]`);
         if (anchorExists) {
           activeComments.push([key, c]);
@@ -193,52 +197,61 @@ const CommentsEngine = (() => {
     });
 
     if (activeComments.length === 0) {
-      // Show empty state with "Add comment" button
-      list.innerHTML = `
-        <div class="cs-empty-state">
-          <p>Start a discussion</p>
-          <button class="btn-primary" style="width:100%;" ${pendingRange ? '' : 'disabled'}>
-            Add comment
-          </button>
-        </div>
-      `;
-      const addBtn = list.querySelector('.btn-primary');
-      if (addBtn) {
-        addBtn.addEventListener('click', () => {
-          promptForCommentOnSelection();
-        });
+      if (sidebarList) {
+        sidebarList.innerHTML = `
+          <div class="cs-empty-state">
+            <p>No comments on this tab</p>
+          </div>
+        `;
       }
-      reflectAddCommentButtonState();
       return;
     }
 
-    // Render each comment card
     activeComments.forEach(([key, c]) => {
+      // Create Card
       const card = document.createElement('div');
       card.className = 'comment-card';
+      card.style.position = 'absolute';
+      card.style.top = `${c.topOffset}px`;
+      card.style.width = '260px';
+      card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+      card.style.background = '#fff';
+      card.style.borderRadius = '8px';
+      card.style.padding = '12px';
+      card.style.border = '1px solid #dadce0';
+      card.style.transition = 'top 0.2s ease-out';
+
       card.innerHTML = `
-        <div class="comment-card-header">
-          <div class="comment-avatar">U</div>
-          <span class="comment-author">You</span>
+        <div class="comment-card-header" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div class="comment-avatar" style="width:24px; height:24px; border-radius:50%; background:#1a73e8; color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold;">U</div>
+          <span class="comment-author" style="font-weight:600; font-size:13px; color:#202124;">You</span>
         </div>
-        <p class="comment-quote">“${c.quote}”</p>
-        <p class="comment-body">${c.body}</p>
-        <div class="comment-actions">
-          <button data-act="resolve">Resolve</button>
-          <button data-act="delete" style="color: #ea4335;">Delete</button>
+        <p class="comment-quote" style="font-size:12px; color:var(--text-secondary); border-left:2px solid #1a73e8; padding-left:6px; margin:0 0 6px 0; font-style:italic;">“${c.quote}”</p>
+        <p class="comment-body" style="font-size:13px; margin:0 0 10px 0; color:#202124;">${c.body}</p>
+        <div class="comment-actions" style="display:flex; gap:12px; font-size:12px;">
+          <button data-act="resolve" style="background:none; border:none; color:#1a73e8; cursor:pointer; font-weight:500; padding:0;">Resolve</button>
+          <button data-act="delete" style="background:none; border:none; color:#ea4335; cursor:pointer; font-weight:500; padding:0;">Delete</button>
         </div>
       `;
 
-      // Resolve
+      // Visual focus triggers on card click
+      card.addEventListener('mouseenter', () => {
+        document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => el.classList.add('active'));
+      });
+      card.addEventListener('mouseleave', () => {
+        document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => el.classList.remove('active'));
+      });
+
+      // Resolve Action
       card.querySelector('[data-act="resolve"]').addEventListener('click', () => {
         c.resolved = true;
         document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => {
           el.className = 'comment-anchor resolved';
         });
-        renderCommentCards(); // Re-render to remove it from list
+        renderCommentCards();
       });
 
-      // Delete
+      // Delete Action
       card.querySelector('[data-act="delete"]').addEventListener('click', () => {
         document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => {
           el.replaceWith(...el.childNodes);
@@ -247,19 +260,38 @@ const CommentsEngine = (() => {
         renderCommentCards();
       });
 
-      list.appendChild(card);
-    });
+      // Append to the margins!
+      floatingContainer.appendChild(card);
 
-    // AUTOMATICALLY OPEN SIDEBAR: If there are active comments, show the sidebar
-    const sidebar = document.getElementById('comments-sidebar');
-    if (sidebar && activeComments.length > 0) {
-        sidebar.hidden = false;
-    }
+      // Also render a mirrored copy in the Sidebar for easy navigation/organization
+      if (sidebarList) {
+        const sidebarCard = card.cloneNode(true);
+        sidebarCard.style.position = 'static'; // Regular block positioning inside the sidebar list
+        sidebarCard.style.width = '100%';
+        sidebarCard.style.boxShadow = 'none';
+        sidebarCard.style.border = '1px solid var(--border-subtle)';
+        
+        sidebarCard.querySelector('[data-act="resolve"]').addEventListener('click', () => {
+          c.resolved = true;
+          document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => {
+            el.className = 'comment-anchor resolved';
+          });
+          renderCommentCards();
+        });
+
+        sidebarCard.querySelector('[data-act="delete"]').addEventListener('click', () => {
+          document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => {
+            el.replaceWith(...el.childNodes);
+          });
+          comments.delete(key);
+          renderCommentCards();
+        });
+
+        sidebarList.appendChild(sidebarCard);
+      }
+    });
   }
 
-  // ------------------------------
-  // 5. Public API
-  // ------------------------------
   return {
     bindSelectionListener,
     promptForCommentOnSelection,
