@@ -1,18 +1,59 @@
-/* Header Layout Architecture */
+/* Custom Author Highlights */
+.author-marcus {
+  background-color: #f3e5f5; /* Light Violet background */
+  border-bottom: 2px dashed #8e24aa; /* Dark purple subtle highlight line */
+  padding: 1px 2px;
+  border-radius: 2px;
+  cursor: help;
+}
+
+/* Modal Action Button Layout & Aesthetic Correction */
+.btn-primary, .btn-secondary {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  background: #1557b0;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.btn-secondary:hover {
+  background: #f8f9fa;
+  border-color: #dadce0;
+}
+
+/* Rest of your existing components.css styles... */
 .header-top {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Keeps actions on the right, title on the left */
+  justify-content: space-between;
   padding: 10px 16px 4px;
   gap: 12px;
-  flex-shrink: 0; /* Prevents the top header row from collapsing */
+  flex-shrink: 0;
 }
 
 .title-block { 
   flex: 1; 
   display: flex; 
   flex-direction: column; 
-  min-width: 0; /* Allows children to truncate properly without stretching */
+  min-width: 0;
 }
 
 .title-row { 
@@ -58,10 +99,10 @@
   display: flex; 
   gap: 4px; 
   margin-top: 2px; 
-  overflow-x: auto; /* Allows menu bar to scroll sideways if screen is tiny */
+  overflow-x: auto;
   white-space: nowrap;
 }
-.menubar::-webkit-scrollbar { display: none; } /* Hide scrollbar for a cleaner look */
+.menubar::-webkit-scrollbar { display: none; }
 .menubar span {
   padding: 2px 8px; 
   font-size: 13px; 
@@ -77,7 +118,7 @@
   display: flex; 
   align-items: center; 
   gap: 12px; 
-  flex-shrink: 0; /* Prevents actions from smushing together */
+  flex-shrink: 0;
 }
 
 .icon-btn, .toolbar-btn, .vh-back-btn {
@@ -91,7 +132,7 @@
   align-items: center; 
   justify-content: center; 
   cursor: pointer;
-  flex-shrink: 0; /* Prevents icons from shrinking */
+  flex-shrink: 0;
 }
 .icon-btn:hover, .toolbar-btn:hover, .vh-back-btn:hover {
   background: rgba(60,64,67,0.08); 
@@ -114,7 +155,6 @@
 }
 .share-btn:hover { background: #b3dbf2; }
 
-/* Authentic Colored Anonymous User Avatar Component */
 .anonymous-profile {
   width: 34px;
   height: 34px;
@@ -129,7 +169,6 @@
   flex-shrink: 0;
 }
 
-/* Dense Google Docs Toolbar Layout Architecture */
 .toolbar {
   display: flex;
   align-items: center;
@@ -137,19 +176,12 @@
   padding: 4px 14px;
   background: #ffffff;
   border-top: 1px solid var(--border-subtle);
-  flex-shrink: 0; /* Prevents the toolbar from compressing vertically */
-  overflow-x: auto; /* Allows horizontal scrolling instead of wrapping or squishing items */
+  flex-shrink: 0;
+  overflow-x: auto;
   white-space: nowrap; 
 }
-
-/* Hide scrollbar tracks for modern look but keep mousewheel scrolling active */
-.toolbar::-webkit-scrollbar {
-  height: 4px;
-}
-.toolbar::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 2px;
-}
+.toolbar::-webkit-scrollbar { height: 4px; }
+.toolbar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
 
 .toolbar-sep { 
   width: 1px; 
@@ -173,17 +205,8 @@
 }
 .toolbar-select:hover { background: rgba(60,64,67,0.08); }
 
-.size-controls { 
-  display: flex; 
-  align-items: center; 
-  flex-shrink: 0;
-}
-.text-size-btn { 
-  width: 24px; 
-  height: 24px; 
-  font-size: 15px; 
-  font-weight: bold; 
-}
+.size-controls { display: flex; align-items: center; flex-shrink: 0; }
+.text-size-btn { width: 24px; height: 24px; font-size: 15px; font-weight: bold; }
 .font-size-input {
   width: 28px; 
   height: 24px; 
@@ -215,7 +238,6 @@
   width: 100%; 
 }
 
-/* Dynamic Rename Tab Item Row Component */
 .tab-item-row {
   display: flex;
   align-items: center;
