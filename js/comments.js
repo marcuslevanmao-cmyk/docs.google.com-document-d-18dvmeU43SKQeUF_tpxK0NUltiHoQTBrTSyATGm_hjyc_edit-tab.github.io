@@ -1,11 +1,15 @@
 /**
- * comments.js — Contextual Annotation Engine
+ * comments.js — Contextual Annotation Engine with Floating Composer
  */
 const CommentsEngine = (() => {
-  const comments = new Map();
-  let pendingRange = null;
+  const comments = new Map();          // Map<commentId, { id, quote, body, resolved }>
+  let pendingRange = null;             // Currently selected range for a new comment
   let idCounter = 0;
+  let activePopup = null;              // Reference to the floating composer element
 
+  // ------------------------------
+  // 1. Selection Listener
+  // ------------------------------
   function bindSelectionListener() {
     document.getElementById('doc-canvas').addEventListener('mouseup', () => {
       const sel = window.getSelection();
@@ -23,8 +27,10 @@ const CommentsEngine = (() => {
       }
 
       const node = range.commonAncestorContainer;
-      const insidePage = node.nodeType === Node.ELEMENT_NODE ? node.closest('.doc-page') : node.parentElement?.closest('.doc-page');
-      
+      const insidePage = node.nodeType === Node.ELEMENT_NODE
+        ? node.closest('.doc-page')
+        : node.parentElement?.closest('.doc-page');
+
       if (insidePage) {
         pendingRange = range.cloneRange();
       } else {
@@ -34,19 +40,118 @@ const CommentsEngine = (() => {
     });
   }
 
+  // Enable/disable the toolbar comment button based on selection
   function reflectAddCommentButtonState() {
-    const btn = document.querySelector('.cs-add-comment-btn');
+    const btn = document.getElementById('toolbar-comment-btn');
     if (btn) btn.disabled = !pendingRange;
+    // Also update any "Add comment" button in the sidebar empty state
+    const sidebarBtn = document.querySelector('.cs-empty-state .btn-primary');
+    if (sidebarBtn) sidebarBtn.disabled = !pendingRange;
   }
 
+  // ------------------------------
+  // 2. Floating Composer
+  // ------------------------------
+  function showFloatingComposer(cid, quote, rangeRect) {
+    // Remove any existing popup
+    if (activePopup) {
+      activePopup.remove();
+      activePopup = null;
+    }
+
+    const popup = document.createElement('div');
+    popup.className = 'comment-floating-composer';
+    popup.style.position = 'fixed';
+    // Position near the selection – slightly below and to the left
+    popup.style.left = Math.min(rangeRect.left, window.innerWidth - 340) + 'px';
+    popup.style.top = (rangeRect.bottom + 10) + 'px';
+    popup.style.width = '320px';
+    popup.style.zIndex = '1000';
+    popup.innerHTML = `
+      <div class="comment-floating-header">
+        <span>Add comment</span>
+        <button class="close-popup-btn" title="Close">×</button>
+      </div>
+      <div class="comment-floating-quote">“${quote}”</div>
+      <textarea placeholder="Write your comment…"></textarea>
+      <div class="comment-floating-actions">
+        <button class="btn-secondary cancel-btn">Cancel</button>
+        <button class="btn-primary save-btn">Comment</button>
+      </div>
+    `;
+
+    // Append to body so it's above everything
+    document.body.appendChild(popup);
+    activePopup = popup;
+
+    // Focus the textarea
+    const textarea = popup.querySelector('textarea');
+    textarea.focus();
+
+    // --- Event listeners ---
+    // Cancel
+    popup.querySelector('.cancel-btn').addEventListener('click', () => {
+      removeAnchor(cid);
+      closePopup();
+      pendingRange = null;
+    });
+
+    // Close button (×)
+    popup.querySelector('.close-popup-btn').addEventListener('click', () => {
+      removeAnchor(cid);
+      closePopup();
+      pendingRange = null;
+    });
+
+    // Save
+    popup.querySelector('.save-btn').addEventListener('click', () => {
+      const body = textarea.value.trim();
+      if (!body) return;
+
+      // Store the comment
+      comments.set(cid, { id: cid, quote, body, resolved: false });
+
+      // Refresh the sidebar list
+      renderCommentCards();
+
+      // Remove popup and clear range
+      closePopup();
+      pendingRange = null;
+      reflectAddCommentButtonState();
+    });
+
+    // Click outside to close (optional: we could keep it open, but we'll allow cancel)
+    // We'll rely on Cancel / Close.
+  }
+
+  function closePopup() {
+    if (activePopup) {
+      activePopup.remove();
+      activePopup = null;
+    }
+  }
+
+  // Remove the comment anchor span (if comment is cancelled)
+  function removeAnchor(cid) {
+    document.querySelectorAll(`span[data-comment-id="${cid}"]`).forEach(el => {
+      el.replaceWith(...el.childNodes);
+    });
+  }
+
+  // ------------------------------
+  // 3. Public: Prompt for Comment
+  // ------------------------------
   function promptForCommentOnSelection() {
-    // SILENT FAILURE OPERATION: If no active text selection ranges exist, exit execution loop with no popup alert
     if (!pendingRange) return;
 
-    const textQuote = pendingRange.toString();
+    const textQuote = pendingRange.toString().trim();
+    if (!textQuote) return;
+
+    // Create a unique ID for this comment
     idCounter++;
     const cid = `comm_${idCounter}_${Date.now().toString().slice(-3)}`;
 
+    // Wrap the selected text with a comment anchor span
     const span = document.createElement('span');
     span.className = 'comment-anchor active';
     span.dataset.commentId = cid;
@@ -54,82 +159,73 @@ const CommentsEngine = (() => {
     try {
       pendingRange.surroundContents(span);
     } catch (e) {
+      // Fallback if range spans multiple nodes
       const frag = pendingRange.extractContents();
       span.appendChild(frag);
       pendingRange.insertNode(span);
     }
 
+    // Clear the selection
     window.getSelection().removeAllRanges();
-    renderComposerCard(cid, textQuote);
+
+    // Get the bounding rect of the range for positioning the popup
+    const rect = pendingRange.getBoundingClientRect();
+    // The range is now empty because we cleared selection, but we have the rect from before.
+    // We'll use the rect we saved.
+    showFloatingComposer(cid, textQuote, rect);
+
+    // Reset pendingRange so we don't reuse it
+    pendingRange = null;
+    reflectAddCommentButtonState();
   }
 
-  function renderComposerCard(cid, quote) {
-    const list = document.getElementById('comments-list');
-    if (!list) return;
-
-    const existingComposer = list.querySelector('.comment-composer-card');
-    if (existingComposer) existingComposer.remove();
-
-    const compCard = document.createElement('div');
-    compCard.className = 'comment-composer-card';
-    compCard.innerHTML = `
-      <textarea placeholder="Add a comment..."></textarea>
-      <div class="composer-actions">
-        <button class="btn-secondary" data-action="cancel">Cancel</button>
-        <button class="btn-primary" data-action="save">Comment</button>
-      </div>
-    `;
-
-    compCard.querySelector('[data-action="cancel"]').addEventListener('click', () => {
-      document.querySelectorAll(`span[data-comment-id="${cid}"]`).forEach(el => {
-        el.replaceWith(...el.childNodes);
-      });
-      compCard.remove();
-      pendingRange = null;
-    });
-
-    compCard.querySelector('[data-action="save"]').addEventListener('click', () => {
-      const bodyText = compCard.querySelector('textarea').value.trim();
-      if (!bodyText) return;
-
-      comments.set(cid, { id: cid, quote: quote, body: bodyText, resolved: false });
-      compCard.remove();
-      pendingRange = null;
-      renderCommentCards();
-    });
-
-    list.prepend(compCard);
-    compCard.querySelector('textarea').focus();
-  }
-
+  // ------------------------------
+  // 4. Render Comments in Sidebar
+  // ------------------------------
   function renderCommentCards() {
     const list = document.getElementById('comments-list');
     if (!list) return;
 
-    const activeComposer = list.querySelector('.comment-composer-card');
-    const activeEntries = [];
+    // Remove any empty-state message if present, we'll rebuild
+    list.innerHTML = '';
+
+    // Collect active (non-resolved) comments that still have an anchor in the doc
+    const activeComments = [];
     comments.forEach((c, key) => {
-      if (!c.resolved && document.querySelector(`span[data-comment-id="${c.id}"]`)) {
-        activeEntries.push([key, c]);
+      if (!c.resolved) {
+        const anchorExists = document.querySelector(`span[data-comment-id="${c.id}"]`);
+        if (anchorExists) {
+          activeComments.push([key, c]);
+        } else {
+          // Orphaned comment – we could delete it, but we'll keep it for now
+          // You might want to auto-clean, but we'll keep it.
+        }
       }
     });
 
-    list.innerHTML = '';
-    if (activeComposer) list.appendChild(activeComposer);
-
-    if (activeEntries.length === 0 && !activeComposer) {
+    if (activeComments.length === 0) {
+      // Show empty state with "Add comment" button
       list.innerHTML = `
         <div class="cs-empty-state">
           <p>Start a discussion</p>
-          <button class="btn-primary cs-add-comment-btn" style="width:100%;" disabled>Add comment</button>
+          <button class="btn-primary" style="width:100%;" ${pendingRange ? '' : 'disabled'}>
+            Add comment
+          </button>
         </div>
       `;
-      list.querySelector('.cs-add-comment-btn').addEventListener('click', promptForCommentOnSelection);
+      const addBtn = list.querySelector('.btn-primary');
+      if (addBtn) {
+        addBtn.addEventListener('click', () => {
+          // Prompt for comment (will use pendingRange if any)
+          promptForCommentOnSelection();
+        });
+      }
       reflectAddCommentButtonState();
       return;
     }
 
-    activeEntries.forEach(([key, c]) => {
+    // Render each comment card
+    activeComments.forEach(([key, c]) => {
       const card = document.createElement('div');
       card.className = 'comment-card';
       card.innerHTML = `
@@ -137,25 +233,27 @@ const CommentsEngine = (() => {
           <div class="comment-avatar">U</div>
           <span class="comment-author">You</span>
         </div>
-        <p class="comment-quote">"${c.quote}"</p>
+        <p class="comment-quote">“${c.quote}”</p>
         <p class="comment-body">${c.body}</p>
         <div class="comment-actions">
           <button data-act="resolve">Resolve</button>
-          <button data-act="delete" style="color: #ea4335; margin-left: 10px; background: none; border: none; cursor: pointer; font-size: 12px;">Delete</button>
+          <button data-act="delete" style="color: #ea4335;">Delete</button>
         </div>
       `;
-      
-      // Resolve action
+
+      // Resolve
       card.querySelector('[data-act="resolve"]').addEventListener('click', () => {
         c.resolved = true;
-        document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => el.className = 'comment-anchor resolved');
-        renderCommentCards();
+        document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => {
+          el.className = 'comment-anchor resolved';
+        });
+        renderCommentCards(); // Re-render to remove it from list
       });
 
-      // Delete action (Removes span wrapper entirely)
+      // Delete
       card.querySelector('[data-act="delete"]').addEventListener('click', () => {
         document.querySelectorAll(`span[data-comment-id="${c.id}"]`).forEach(el => {
-            el.replaceWith(...el.childNodes); // Strips the span, leaves the text
+          el.replaceWith(...el.childNodes);
         });
         comments.delete(key);
         renderCommentCards();
@@ -165,5 +263,12 @@ const CommentsEngine = (() => {
     });
   }
 
-  return { bindSelectionListener, promptForCommentOnSelection, renderCommentCards };
+  // ------------------------------
+  // 5. Public API
+  // ------------------------------
+  return {
+    bindSelectionListener,
+    promptForCommentOnSelection,
+    renderCommentCards,
+  };
 })();
