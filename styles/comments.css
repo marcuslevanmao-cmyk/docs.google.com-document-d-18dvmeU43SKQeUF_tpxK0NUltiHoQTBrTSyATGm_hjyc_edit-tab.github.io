@@ -58,3 +58,88 @@
 .version-item.current { border-color: var(--accent-blue); background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .version-time { font-size: 13px; font-weight: 500; margin-bottom: 4px; color: var(--text-primary); }
 .version-meta { font-size: 11px; color: var(--text-secondary); }
+/* Floating comment composer */
+.comment-floating-composer {
+  background: white;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  padding: 12px 16px;
+  font-family: Arial, sans-serif;
+  max-width: 360px;
+  min-width: 280px;
+}
+.comment-floating-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 14px;
+}
+.close-popup-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #5f6368;
+  padding: 0 4px;
+}
+.close-popup-btn:hover {
+  color: #202124;
+}
+.comment-floating-quote {
+  background: #f8f9fa;
+  border-left: 3px solid #dadce0;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #3c4043;
+  margin-bottom: 10px;
+  font-style: italic;
+  word-break: break-word;
+}
+.comment-floating-composer textarea {
+  width: 100%;
+  height: 60px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 13px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  margin-bottom: 8px;
+}
+.comment-floating-composer textarea:focus {
+  border-color: #1a73e8;
+}
+.comment-floating-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.comment-floating-actions .btn-secondary {
+  background: transparent;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.comment-floating-actions .btn-primary {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.comment-floating-actions .btn-primary:hover {
+  background: #1557b0;
+}
+.comment-floating-actions .btn-secondary:hover {
+  background: rgba(0,0,0,0.04);
+}
