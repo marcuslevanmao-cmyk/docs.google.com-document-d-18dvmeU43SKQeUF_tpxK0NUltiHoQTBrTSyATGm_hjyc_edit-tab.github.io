@@ -28,7 +28,7 @@
 
 .star-btn {
   width: 30px; height: 30px;
-  border: none; background: transparent; border-radius: 50%;
+  border: none; background: transparent; border-radius: 4px;
   color: #70757a;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
@@ -37,7 +37,7 @@
 
 .icon-btn.sm {
   width: 30px; height: 30px;
-  border: none; background: transparent; border-radius: 50%;
+  border: none; background: transparent; border-radius: 4px;
   color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
@@ -72,7 +72,7 @@
 .icon-btn {
   width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  border: none; background: transparent; border-radius: 50%;
+  border: none; background: transparent; border-radius: 4px;
   color: var(--text-secondary); cursor: pointer;
   position: relative;
 }
@@ -106,6 +106,7 @@
   margin-left: 6px;
   border-radius: 16px;
   border: none;
+
   background: #0b57d0;
   color: #fff;
   font-size: 13px;
@@ -235,7 +236,7 @@
 /* ---------- Document tabs sidebar ---------- */
 .tabs-back-btn {
   width: 30px; height: 30px;
-  border: none; background: transparent; border-radius: 50%;
+  border: none; background: transparent; border-radius: 4px;
   color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
@@ -366,9 +367,10 @@
   padding: 12px 20px;
   background: var(--header-bg);
 }
+
 .vh-back-btn {
   width: 32px; height: 32px;
-  border: none; background: transparent; border-radius: 50%;
+  border: none; background: transparent; border-radius: 4px;
   color: var(--text-primary);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
