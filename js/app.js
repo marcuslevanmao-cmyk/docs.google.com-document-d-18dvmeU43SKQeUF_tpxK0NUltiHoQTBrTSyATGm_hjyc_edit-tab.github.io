@@ -1,213 +1,140 @@
 /**
- * app.js — App Orchestrator & Rich Interactive Layout Handlers
+ * app.js — App Orchestrator
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // ============================================================
-    // 1. INITIALIZE EDITOR
-    // ============================================================
+    // 1. Init editor
     EditorEngine.renderTabsSidebar();
     EditorEngine.loadActiveTabContent();
     CommentsEngine.bindSelectionListener();
 
-    // Add tab button
-    const addTabBtn = document.getElementById('add-tab-btn');
-    if (addTabBtn) {
-        addTabBtn.addEventListener('click', () => EditorEngine.createNewTab());
-    }
+    // 2. Add tab button
+    document.getElementById('add-tab-btn')?.addEventListener('click', () => EditorEngine.createNewTab());
 
-    // ============================================================
-    // 2. FORMATTING TOOLBAR
-    // ============================================================
+    // 3. Formatting toolbar
     document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
             const action = btn.dataset.action;
-            
-            if (action === 'bold' || action === 'italic' || action === 'underline') {
+            if (['bold','italic','underline'].includes(action)) {
                 document.execCommand(action, false, null);
-                HistoryEngine.captureSnapshot(`Format modifier applied: ${action}`);
+                HistoryEngine.captureSnapshot(`Format: ${action}`);
             } else if (action === 'undo' || action === 'redo') {
                 document.execCommand(action, false, null);
-            } else if (action === 'justifyleft' || action === 'justifycenter' || action === 'justifyright') {
+            } else if (action.startsWith('justify')) {
                 document.execCommand(action, false, null);
-                HistoryEngine.captureSnapshot(`Alignment format changed`);
+                HistoryEngine.captureSnapshot('Alignment changed');
             } else if (action === 'forecolor') {
                 document.execCommand('foreColor', false, '#ea4335');
-                HistoryEngine.captureSnapshot(`Changed text color to red`);
+                HistoryEngine.captureSnapshot('Text color changed');
             } else if (action === 'hilitecolor') {
                 document.execCommand('hiliteColor', false, '#fff475');
-                HistoryEngine.captureSnapshot(`Applied text highlight tint`);
+                HistoryEngine.captureSnapshot('Highlight applied');
             }
         });
     });
 
-    // ============================================================
-    // 3. DROPDOWN CONTROLS
-    // ============================================================
-    const fontSelect = document.querySelector('select[title="Font"]');
-    if (fontSelect) {
-        fontSelect.addEventListener('change', (e) => {
-            document.execCommand('fontName', false, e.target.value);
-            HistoryEngine.captureSnapshot(`Changed font to ${e.target.value}`);
-        });
-    }
+    // 4. Font & style dropdowns
+    document.querySelector('select[title="Font"]')?.addEventListener('change', (e) => {
+        document.execCommand('fontName', false, e.target.value);
+        HistoryEngine.captureSnapshot(`Font: ${e.target.value}`);
+    });
+    document.querySelector('select[title="Styles"]')?.addEventListener('change', (e) => {
+        const tags = { 'Heading 1':'H1', 'Heading 2':'H2', 'Heading 3':'H3' };
+        document.execCommand('formatBlock', false, tags[e.target.value] || 'p');
+        HistoryEngine.captureSnapshot(`Style: ${e.target.value}`);
+    });
 
-    const styleSelect = document.querySelector('select[title="Styles"]');
-    if (styleSelect) {
-        styleSelect.addEventListener('change', (e) => {
-            let tag = 'p';
-            if (e.target.value === 'Heading 1') tag = 'H1';
-            else if (e.target.value === 'Heading 2') tag = 'H2';
-            else if (e.target.value === 'Heading 3') tag = 'H3';
-            
-            document.execCommand('formatBlock', false, tag);
-            HistoryEngine.captureSnapshot(`Applied style: ${e.target.value}`);
-        });
-    }
-
-    // ============================================================
-    // 4. FONT SIZE CONTROLS
-    // ============================================================
-    const decBtn = document.getElementById('decrease-size-btn');
-    const incBtn = document.getElementById('increase-size-btn');
-    const sizeInput = document.querySelector('.font-size-input');
-
-    if (decBtn && incBtn && sizeInput) {
-        const applyFontSize = (newSize) => {
-            sizeInput.value = newSize;
-            
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0 && !selection.isCollapsed) {
+    // 5. Font size controls
+    const dec = document.getElementById('decrease-size-btn');
+    const inc = document.getElementById('increase-size-btn');
+    const sizeIn = document.querySelector('.font-size-input');
+    if (dec && inc && sizeIn) {
+        const applySize = (newSize) => {
+            sizeIn.value = newSize;
+            const sel = window.getSelection();
+            if (sel.rangeCount && !sel.isCollapsed) {
                 try {
-                    const range = selection.getRangeAt(0);
+                    const range = sel.getRangeAt(0);
                     const span = document.createElement('span');
-                    span.style.fontSize = `${newSize}px`;
+                    span.style.fontSize = newSize + 'px';
                     range.surroundContents(span);
-                    HistoryEngine.captureSnapshot(`Changed font size to ${newSize}px`);
-                } catch (e) {
+                    HistoryEngine.captureSnapshot(`Size: ${newSize}px`);
+                } catch {
                     document.execCommand('fontSize', false, '3');
-                    const fontElements = document.getElementsByTagName("font");
-                    for (let i = 0; i < fontElements.length; i++) {
-                        if (fontElements[i].size === "3") {
-                            fontElements[i].removeAttribute("size");
-                            fontElements[i].style.fontSize = `${newSize}px`;
-                        }
-                    }
-                    HistoryEngine.captureSnapshot(`Changed font size to ${newSize}px`);
+                    document.querySelectorAll('font[size="3"]').forEach(el => {
+                        el.removeAttribute('size');
+                        el.style.fontSize = newSize + 'px';
+                    });
+                    HistoryEngine.captureSnapshot(`Size: ${newSize}px`);
                 }
             }
         };
-
-        decBtn.addEventListener('click', () => {
-            let size = parseInt(sizeInput.value) || 11;
-            if (size > 6) applyFontSize(size - 1);
+        dec.addEventListener('click', () => {
+            let s = parseInt(sizeIn.value) || 11;
+            if (s > 6) applySize(s - 1);
         });
-
-        incBtn.addEventListener('click', () => {
-            let size = parseInt(sizeInput.value) || 11;
-            if (size < 72) applyFontSize(size + 1);
+        inc.addEventListener('click', () => {
+            let s = parseInt(sizeIn.value) || 11;
+            if (s < 72) applySize(s + 1);
         });
-
-        sizeInput.addEventListener('change', () => {
-            let size = parseInt(sizeInput.value) || 11;
-            if (size >= 6 && size <= 72) {
-                applyFontSize(size);
-            }
+        sizeIn.addEventListener('change', () => {
+            let s = parseInt(sizeIn.value) || 11;
+            if (s >= 6 && s <= 72) applySize(s);
         });
     }
 
-    // ============================================================
-    // 5. COMMENT BUTTON (Toolbar)
-    // ============================================================
-    const toolbarCommentBtn = document.getElementById('toolbar-comment-btn');
-    if (toolbarCommentBtn) {
-        toolbarCommentBtn.addEventListener('click', () => CommentsEngine.promptForCommentOnSelection());
-    }
+    // 6. Comment button (toolbar)
+    document.getElementById('toolbar-comment-btn')?.addEventListener('click', () => CommentsEngine.promptForCommentOnSelection());
 
-    // ============================================================
-    // 6. COMMENTS SIDEBAR TOGGLE
-    // ============================================================
+    // 7. Comments sidebar toggle
     const commentBtn = document.getElementById('comment-btn');
     const commentsSidebar = document.getElementById('comments-sidebar');
-    const closeCommentsBtn = document.getElementById('close-comments-btn');
-
+    const closeComments = document.getElementById('close-comments-btn');
     if (commentBtn && commentsSidebar) {
         commentBtn.addEventListener('click', () => {
-            // Close history if open
-            const vhOverlay = document.getElementById('version-history-view');
-            if (vhOverlay) vhOverlay.hidden = true;
+            document.getElementById('version-history-view').hidden = true;
             commentsSidebar.hidden = !commentsSidebar.hidden;
         });
     }
-
-    if (closeCommentsBtn && commentsSidebar) {
-        closeCommentsBtn.addEventListener('click', () => {
-            commentsSidebar.hidden = true;
-        });
+    if (closeComments && commentsSidebar) {
+        closeComments.addEventListener('click', () => { commentsSidebar.hidden = true; });
     }
 
-    // ============================================================
-    // 7. VERSION HISTORY TOGGLE
-    // ============================================================
+    // 8. History toggle
     const historyBtn = document.getElementById('history-btn');
     const vhOverlay = document.getElementById('version-history-view');
-    const vhBackBtn = document.getElementById('vh-back-btn');
-
+    const vhBack = document.getElementById('vh-back-btn');
     if (historyBtn && vhOverlay) {
         historyBtn.addEventListener('click', () => {
-            // Close comments if open
             if (commentsSidebar) commentsSidebar.hidden = true;
-            
-            // Show history
             vhOverlay.hidden = false;
-            
-            // Preview the most recent version
-            const history = HistoryEngine.getHistory();
-            if (history && history.length > 0) {
-                HistoryEngine.previewSnapshot(0);
-            }
+            HistoryEngine.previewSnapshot(0);
             renderHistorySidebar();
         });
     }
-
-    if (vhBackBtn && vhOverlay) {
-        vhBackBtn.addEventListener('click', () => {
-            vhOverlay.hidden = true;
-        });
+    if (vhBack && vhOverlay) {
+        vhBack.addEventListener('click', () => { vhOverlay.hidden = true; });
     }
 
-    // ============================================================
-    // 8. RESTORE MODAL
-    // ============================================================
+    // 9. Restore modal
     const confirmModal = document.getElementById('confirm-modal');
-    const restoreTriggerBtn = document.getElementById('vh-restore-trigger-btn');
-    const modalCancelBtn = document.getElementById('modal-cancel-btn');
-    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-
-    if (restoreTriggerBtn && confirmModal) {
-        restoreTriggerBtn.addEventListener('click', () => {
-            confirmModal.hidden = false;
-        });
+    const restoreBtn = document.getElementById('vh-restore-trigger-btn');
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    if (restoreBtn && confirmModal) {
+        restoreBtn.addEventListener('click', () => { confirmModal.hidden = false; });
     }
-
-    if (modalCancelBtn && confirmModal) {
-        modalCancelBtn.addEventListener('click', () => {
-            confirmModal.hidden = true;
-        });
+    if (cancelBtn && confirmModal) {
+        cancelBtn.addEventListener('click', () => { confirmModal.hidden = true; });
     }
-
-    if (modalConfirmBtn && vhOverlay && confirmModal) {
-        modalConfirmBtn.addEventListener('click', () => {
-            const targetIdx = HistoryEngine.getSelectedPreviewIndex();
-            if (targetIdx !== -1) {
-                HistoryEngine.rollbackTo(targetIdx);
-            }
+    if (confirmBtn && vhOverlay && confirmModal) {
+        confirmBtn.addEventListener('click', () => {
+            const idx = HistoryEngine.getSelectedPreviewIndex();
+            if (idx !== -1) HistoryEngine.rollbackTo(idx);
             confirmModal.hidden = true;
             vhOverlay.hidden = true;
         });
     }
 
-    // ============================================================
-    // 9. INITIAL SNAPSHOT
-    // ============================================================
+    // 10. Initial snapshot
     HistoryEngine.captureSnapshot('Document session opened');
 });
