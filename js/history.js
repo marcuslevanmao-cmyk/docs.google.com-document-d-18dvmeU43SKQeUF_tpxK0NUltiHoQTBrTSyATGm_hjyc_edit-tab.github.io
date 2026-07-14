@@ -382,59 +382,13 @@ const HistoryEngine = (() => {
     };
 })();
 
+// history.js — Complete Version History Engine with Full Workspace Snapshots
+
+// ... (keep the same content definitions and documentHistory as before) ...
+
 // ============================================================
-// 5. RENDER FUNCTIONS (sidebars and preview)
+// 5. RENDER FUNCTIONS (with old highlight style)
 // ============================================================
-
-let currentlyPreviewingVersionId = null;
-let currentlyPreviewingTabId = 'tab1';
-
-function renderHistorySidebar() {
-    const listContainer = document.getElementById('version-list');
-    if (!listContainer) return;
-    listContainer.innerHTML = '';
-
-    let currentDayGroup = '';
-
-    currentHistory.forEach((version, index) => {
-        if (version.dayGroup !== currentDayGroup) {
-            currentDayGroup = version.dayGroup;
-            const dayHeader = document.createElement('div');
-            dayHeader.className = 'vh-day-group';
-            dayHeader.textContent = currentDayGroup;
-            listContainer.appendChild(dayHeader);
-        }
-
-        const isCurrent = index === selectedPreviewIndex;
-        const itemHtml = `
-            <div class="vh-item ${isCurrent ? 'active' : ''}" data-id="${version.id}">
-                <div class="vh-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-                <div class="vh-item-content">
-                    <div class="vh-item-time">${version.displayDate}</div>
-                    <div class="vh-item-subtitle">${version.description}</div>
-                    <div class="vh-item-author-row">
-                        <div class="vh-author-dot" style="background-color: ${version.authorColor};"></div>
-                        <span style="color: ${version.authorColor}; font-weight: 500;">${version.author}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = itemHtml;
-        const itemEl = tempDiv.firstElementChild;
-        itemEl.addEventListener('click', () => {
-            document.querySelectorAll('.vh-item').forEach(i => i.classList.remove('active'));
-            itemEl.classList.add('active');
-            selectedPreviewIndex = index;
-            previewVersion(version.id);
-        });
-        listContainer.appendChild(itemEl);
-    });
-
-    const totalSpan = document.getElementById('vh-total-edits');
-    if (totalSpan) totalSpan.textContent = `Total: ${currentHistory.length} edits`;
-}
 
 function previewVersion(versionId) {
     const version = currentHistory.find(v => v.id === versionId);
@@ -482,8 +436,12 @@ function previewVersion(versionId) {
     const canvas = document.getElementById('vh-canvas');
     if (canvas) {
         let html = activeTab.content;
+        // Old style: show a label and background for Marcus's edits
         if (version.author === 'Marcus Le Van Mao') {
-            html = `<div style="border-left: 3px solid ${version.authorColor}; padding-left: 12px;">${html}</div>`;
+            html = `<div class="vh-edit-you">
+                      <span class="vh-edit-label">Edited by Marcus Le Van Mao</span>
+                      ${html}
+                    </div>`;
         }
         canvas.innerHTML = html;
     }
@@ -491,29 +449,6 @@ function previewVersion(versionId) {
     const totalSpan = document.getElementById('vh-total-edits');
     if (totalSpan) totalSpan.textContent = `Total: ${currentHistory.length} edits`;
 }
-
-function saveVersionToHistory(description) {
-    return HistoryEngine.captureSnapshot(description);
-}
-
-window.restoreFullDocumentState = function(savedTabsState) {
-    if (typeof EditorEngine === 'undefined') {
-        console.warn('EditorEngine not available for restore');
-        return;
-    }
-    const liveTabs = EditorEngine.getTabs();
-    liveTabs.length = 0;
-    savedTabsState.forEach((tabState, idx) => {
-        const newTab = {
-            id: tabState.id || `tab_${Date.now()}_${idx}`,
-            title: tabState.title || `Tab ${idx + 1}`,
-            htmlContent: tabState.content || '<div></div>'
-        };
-        liveTabs.push(newTab);
-    });
-    EditorEngine.renderTabsSidebar();
-    EditorEngine.loadActiveTabContent();
-};
 
 // ============================================================
 // 6. AUTO-INIT on DOM ready
