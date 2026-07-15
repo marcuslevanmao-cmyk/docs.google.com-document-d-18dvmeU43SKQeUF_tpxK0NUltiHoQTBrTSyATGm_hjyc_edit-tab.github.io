@@ -140,12 +140,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ----- Click outside sidebar to close -----
+// ─── FIX: Update click-outside listener to protect comment workspace elements ───
   document.addEventListener('click', (e) => {
+    const commentsSidebar = document.getElementById('docs-sidebar');
+    
     if (commentsSidebar && !commentsSidebar.hidden) {
       const isCommentBtn = e.target.closest('#comment-btn');
+      const isToolbarCommentBtn = e.target.closest('#add-comment-btn');
       const isSidebar = e.target.closest('#docs-sidebar');
-      if (!isCommentBtn && !isSidebar) {
+      const isFloatingComposer = e.target.closest('.comment-floating-composer');
+      const isAnchor = e.target.closest('.comment-anchor');
+
+      // If the click is outside all allowed comment infrastructure elements, hide it
+      if (!isCommentBtn && !isToolbarCommentBtn && !isSidebar && !isFloatingComposer && !isAnchor) {
         commentsSidebar.hidden = true;
       }
     }
