@@ -2,18 +2,18 @@
  * app.js — App Orchestrator (Configured for Persistent Margin Layout Tracker)
  */
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize workspace objects safely
+  // Initialize workspace objects safely and sequentially
   EditorEngine.renderTabsSidebar();
   EditorEngine.loadActiveTabContent();
   CommentsEngine.bindSelectionListener();
   
-  // Quick timeout yields document generation cycle time to calculate offsets accurately
-setTimeout(CommentsEngine.renderCommentCards, 100);
+  // Safe function reference parsing (Fully CSP-Compliant)
+  setTimeout(CommentsEngine.renderCommentCards, 100);
 
   // ----- Tab Management -----
   document.getElementById('add-tab-btn')?.addEventListener('click', () => {
     EditorEngine.createNewTab();
-    CommentsEngine.renderCommentCards();
+    setTimeout(CommentsEngine.renderCommentCards, 100);
   });
 
   // ----- Rich-Text Tooling Actions -----
@@ -77,7 +77,7 @@ setTimeout(CommentsEngine.renderCommentCards, 100);
           HistoryEngine.captureSnapshot(`Size: ${newSize}px`);
         }
         CommentsEngine.saveCommentsToStorage();
-        CommentsEngine.renderCommentCards();
+        setTimeout(CommentsEngine.renderCommentCards, 50);
       }
     };
     dec.addEventListener('click', () => {
@@ -106,9 +106,7 @@ setTimeout(CommentsEngine.renderCommentCards, 100);
   });
 
   // Recalculate margins cleanly if window sizes transition
-  window.addEventListener('resize', () => {
-    CommentsEngine.renderCommentCards();
-  });
+  window.addEventListener('resize', CommentsEngine.renderCommentCards);
 
   // Mutation monitors tracking keyboard input
   document.getElementById('pages-container')?.addEventListener('input', () => {
@@ -124,7 +122,9 @@ setTimeout(CommentsEngine.renderCommentCards, 100);
   if (historyBtn && vhOverlay) {
     historyBtn.addEventListener('click', () => {
       vhOverlay.hidden = false;
-      renderHistorySidebar();
+      if (typeof renderHistorySidebar === 'function') {
+        renderHistorySidebar();
+      }
       HistoryEngine.previewSnapshot(0);
     });
   }
@@ -149,7 +149,7 @@ setTimeout(CommentsEngine.renderCommentCards, 100);
       if (idx !== -1) HistoryEngine.rollbackTo(idx);
       confirmModal.hidden = true;
       vhOverlay.hidden = true;
-      localStorage.removeItem('docs_margin_comments'); // Purge stale text maps on reset
+      localStorage.removeItem('docs_margin_comments'); // Purge stale maps on layout flash resets
       location.reload();
     });
   }
