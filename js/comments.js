@@ -1,6 +1,6 @@
 // js/comments.js
 /**
- * comments.js — Google Docs Persistent Margin Track & Storage Engine
+ * comments.js — Google Docs-Style Persistent Margin Track with LocalStorage
  */
 const CommentsEngine = (() => {
   const comments = new Map();
@@ -8,32 +8,17 @@ const CommentsEngine = (() => {
   let idCounter = 0;
   let activePopup = null;
 
-  // Sync internal map container from local persistence layer immediately
-  (() => {
-    try {
-      const storedComm = localStorage.getItem('docs_margin_comments');
-      if (storedComm) {
-        const parsed = JSON.parse(storedComm);
-        parsed.forEach(([k, v]) => comments.set(k, v));
-        
-        // Find highest counter prefix index to prevent unique key ID collisions
-        parsed.forEach(([k]) => {
-          const parts = k.split('_');
-          if (parts[1]) {
-            const val = parseInt(parts[1], 10);
-            if (val > idCounter) idCounter = val;
-          }
-        });
-      }
-    } catch (e) {
-      console.warn("Storage sync recovery fallback active", e);
-    }
-  })();
+  // Load saved comments and synchronized tab states on script boot
+  loadCommentsFromStorage();
 
+  // ------------------------------
+  // 1. Selection & Gutter Init
+  // ------------------------------
   function bindSelectionListener() {
     const pagesContainer = document.getElementById('pages-container');
     if (!pagesContainer) return;
 
+    // Enforce container relative layout context for absolute margin positioning
     pagesContainer.style.position = 'relative';
 
     pagesContainer.addEventListener('mouseup', (e) => {
@@ -71,6 +56,7 @@ const CommentsEngine = (() => {
       reflectAddCommentButtonState();
     });
 
+    // Dismiss composer popups when clicking out on empty canvas workspace
     document.addEventListener('mousedown', (e) => {
       if (!e.target.closest('.doc-page') && 
           !e.target.closest('.comment-floating-composer') &&
@@ -87,6 +73,9 @@ const CommentsEngine = (() => {
     if (btn) btn.disabled = !pendingRange;
   }
 
+  // ------------------------------
+  // 2. Context Input Floating Popup
+  // ------------------------------
   function showFloatingComposer(cid, quote, rangeRect) {
     closePopup();
 
@@ -97,22 +86,28 @@ const CommentsEngine = (() => {
     let top = rangeRect.bottom + window.scrollY + 10;
     if (left + 340 > window.innerWidth) left = window.innerWidth - 350;
 
-    popup.style = `position:fixed; left:${left}px; top:${top}px; width:340px; z-index:2000; pointer-events:auto;`;
+    popup.style.position = 'fixed';
+    popup.style.left = left + 'px';
+    popup.style.top = top + 'px';
+    popup.style.width = '340px';
+    popup.style.zIndex = '2000';
 
     popup.innerHTML = `
-      <div style="background:#fff; border:1px solid #dadce0; border-radius:12px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,0.15); font-family: Roboto, Arial, sans-serif;">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-          <div style="width:32px; height:32px; border-radius:50%; background-color:#1a73e8; display:flex; align-items:center; justify-content:center; color:white; font-size:14px; font-weight:500;">
-            Y
+      <div class="docs-hover-card" style="background:#fff; border:1px solid #dadce0; border-radius:12px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+        <div class="card-header" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div class="avatar" style="width:32px; height:32px; border-radius:50%; background-color:#5f6368; display:flex; align-items:center; justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C9.24 2 7 4.24 7 7C7 9.76 9.24 12 12 12C14.76 12 17 9.76 17 7C17 4.24 14.76 2 12 2ZM12 14C8.66 14 2 15.67 2 19V22H22V19C22 15.67 15.34 14 12 14Z" fill="white"/>
+            </svg>
           </div>
-          <span style="font-size:14px; font-weight:500; color:#1f1f1f;">You</span>
+          <span class="user-name" style="font-size:14px; font-weight:500; color:#1f1f1f;">You</span>
         </div>
-        <div style="margin-bottom:12px;">
-          <input type="text" class="docs-pill-input" placeholder="Comment or add others with @" style="width:100%; box-sizing:border-box; border:1px solid #0b57d0; border-radius:24px; padding:10px 16px; font-size:14px; outline:none;">
+        <div class="card-input-container" style="margin-bottom:12px;">
+          <input type="text" class="docs-pill-input" placeholder="Comment or add others with @" style="width:100%; border:1px solid #0b57d0; border-radius:24px; padding:10px 16px; font-size:14px; outline:none;">
         </div>
-        <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <div class="card-actions" style="display:flex; justify-content:flex-end; gap:8px;">
           <button class="btn-text-cancel" style="background:none; border:none; color:#5f6368; padding:8px 16px; cursor:pointer; font-size:14px; font-weight:500;">Cancel</button>
-          <button class="btn-filled-comment" disabled style="background:#c2e7ff; color:#041e49; border:none; border-radius:24px; padding:8px 20px; cursor:default; font-size:14px; font-weight:500; transition: background 0.1s;">Comment</button>
+          <button class="btn-filled-comment" disabled style="background:#c2e7ff; color:#041e49; border:none; border-radius:24px; padding:8px 20px; cursor:default; font-size:14px; font-weight:500;">Comment</button>
         </div>
       </div>
     `;
@@ -205,16 +200,25 @@ const CommentsEngine = (() => {
     showFloatingComposer(cid, textQuote, rect);
   }
 
+  // ------------------------------
+  // 3. Persistent Gutter Track Rendering
+  // ------------------------------
   function renderCommentCards() {
     const container = document.getElementById('pages-container');
     if (!container) return;
 
+    // Purge or rebuild dedicated absolute canvas overlay track
     let track = document.getElementById('margin-comments-track');
     if (track) track.remove();
 
     track = document.createElement('div');
     track.id = 'margin-comments-track';
-    track.style = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:100;';
+    track.style.position = 'absolute';
+    track.style.top = '0';
+    track.style.left = '0';
+    track.style.width = '100%';
+    track.style.height = '100%';
+    track.style.pointerEvents = 'none'; // allow scroll/clicks behind empty spaces
     container.appendChild(track);
 
     const activeTabId = EditorEngine.getActiveTabId();
@@ -228,35 +232,46 @@ const CommentsEngine = (() => {
       const page = anchor.closest('.doc-page');
       if (!page) return;
 
+      // Lock positions precisely inline with text markers relative to viewport scrolling
       const containerRect = container.getBoundingClientRect();
       const anchorRect = anchor.getBoundingClientRect();
 
-      // Placed perfectly inside the right margins clear of the paper shadow
-      const cardLeft = page.offsetLeft + page.offsetWidth + 24; 
+      const cardLeft = page.offsetLeft + page.offsetWidth + 32; 
       const cardTop = (anchorRect.top - containerRect.top) + container.scrollTop;
 
       const card = document.createElement('div');
       card.className = 'comment-margin-card';
-      card.style = `position:absolute; left:${cardLeft}px; top:${cardTop}px; width:280px; background:#ffffff; border:1px solid #dadce0; border-radius:8px; padding:12px; box-shadow:0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); pointer-events:auto; font-family: Roboto, Helvetica, Arial, sans-serif; transition: transform 0.15s ease, box-shadow 0.15s ease;`;
+      card.style.position = 'absolute';
+      card.style.left = `${cardLeft}px`;
+      card.style.top = `${cardTop}px`;
+      card.style.width = '290px';
+      card.style.backgroundColor = '#ffffff';
+      card.style.border = '1px solid #dadce0';
+      card.style.borderRadius = '8px';
+      card.style.padding = '12px';
+      card.style.boxShadow = '0 1px 3px rgba(60,64,67,0.15), 0 4px 8px rgba(60,64,67,0.1)';
+      card.style.pointerEvents = 'auto'; // allow inner interaction
+      card.style.zIndex = '100';
 
       card.innerHTML = `
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <div style="width:24px; height:24px; border-radius:50%; background:#1a73e8; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500;">U</div>
-          <div style="display:flex; flex-direction:column;">
-            <span style="font-size:13px; font-weight:500; color:#202124;">You</span>
-            <span style="font-size:11px; color:#5f6368;">Just now</span>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:13px;">
+          <div style="width:20px; height:20px; border-radius:50%; background-color:#5f6368; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C9.24 2 7 4.24 7 7C7 9.76 9.24 12 12 12C14.76 12 17 9.76 17 7C17 4.24 14.76 2 12 2ZM12 14C8.66 14 2 15.67 2 19V22H22V19C22 15.67 15.34 14 12 14Z" fill="white"/>
+            </svg>
           </div>
+          <span style="font-weight:500; color:#1f1f1f;">You</span>
+          <span style="color:#5f6368; font-size:11px; margin-left:auto;">Saved</span>
         </div>
-        <div style="font-size:13px; color:#3c4043; line-height:1.4; margin-bottom:12px; word-break:break-word;">${c.body}</div>
-        <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #f1f3f4; padding-top:8px;">
-          <button data-act="resolve" style="background:none; border:1px solid #dadce0; border-radius:4px; color:#1a73e8; font-size:12px; font-weight:500; cursor:pointer; padding:4px 12px; height:28px;">Resolve</button>
-          <button data-act="delete" style="background:none; border:none; color:#d93025; font-size:12px; font-weight:500; cursor:pointer; padding:4px 8px;">Delete</button>
+        <div style="font-style:italic; color:#5f6368; font-size:12px; margin-bottom:6px; background:#f8f9fa; padding:4px 6px; border-left:2px solid #dadce0; max-height:36px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          “${c.quote}”
+        </div>
+        <div style="font-size:13px; color:#1f1f1f; margin-bottom:8px; word-break:break-word; line-height:1.4;">${c.body}</div>
+        <div style="display:flex; gap:12px;">
+          <button data-act="resolve" style="background:none; border:none; color:#0b57d0; font-size:12px; font-weight:500; cursor:pointer; padding:0;">Resolve</button>
+          <button data-act="delete" style="background:none; border:none; color:#ea4335; font-size:12px; font-weight:500; cursor:pointer; padding:0;">Delete</button>
         </div>
       `;
-
-      // Highlight target visual selections interactively on hover
-      card.addEventListener('mouseenter', () => anchor.classList.add('active'));
-      card.addEventListener('mouseleave', () => anchor.classList.remove('active'));
 
       card.querySelector('[data-act="resolve"]').addEventListener('click', () => {
         c.resolved = true;
@@ -276,10 +291,36 @@ const CommentsEngine = (() => {
     });
   }
 
+  // ------------------------------
+  // 4. LocalStorage Sync Layer
+  // ------------------------------
   function saveCommentsToStorage() {
     localStorage.setItem('docs_margin_comments', JSON.stringify(Array.from(comments.entries())));
+    // Back up the current HTML structure containing selection anchors
     if (typeof EditorEngine !== 'undefined') {
       EditorEngine.saveCurrentTabContent();
+      localStorage.setItem('docs_tab_contents', JSON.stringify(EditorEngine.getTabs()));
+    }
+  }
+
+  function loadCommentsFromStorage() {
+    try {
+      const storedComm = localStorage.getItem('docs_margin_comments');
+      if (storedComm) {
+        const parsed = JSON.parse(storedComm);
+        comments.clear();
+        parsed.forEach(([k, v]) => comments.set(k, v));
+      }
+      
+      const storedTabs = localStorage.getItem('docs_tab_contents');
+      if (storedTabs && typeof EditorEngine !== 'undefined') {
+        const liveTabs = EditorEngine.getTabs();
+        const loaded = JSON.parse(storedTabs);
+        liveTabs.length = 0;
+        loaded.forEach(t => liveTabs.push(t));
+      }
+    } catch (e) {
+      console.warn("Storage sync recovery fallback active", e);
     }
   }
 
