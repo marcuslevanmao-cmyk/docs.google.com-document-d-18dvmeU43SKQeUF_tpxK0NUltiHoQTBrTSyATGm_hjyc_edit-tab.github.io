@@ -91,7 +91,6 @@ const CommentsEngine = (() => {
     popup.style.width = '340px';
     popup.style.zIndex = '1000';
 
-    // Updated profile name to "You" and custom pink background color
     popup.innerHTML = `
       <div class="docs-hover-card">
         <div class="card-header">
@@ -151,7 +150,6 @@ const CommentsEngine = (() => {
 
       const activeTabId = typeof EditorEngine !== 'undefined' ? EditorEngine.getActiveTabId() : 'default-tab';
       
-      // FIXED: Swapped from id selector '#doc-canvas' to class selector '.doc-canvas'
       const canvasEl = document.querySelector('.doc-canvas');
       const canvasRect = canvasEl ? canvasEl.getBoundingClientRect() : { top: 0 };
       const relativeTop = rangeRect.top - canvasRect.top + window.scrollY;
@@ -165,6 +163,7 @@ const CommentsEngine = (() => {
         topOffset: relativeTop
       });
 
+      // Force-reveal comment system wrappers
       const commentsSidebar = document.getElementById('docs-sidebar');
       if (commentsSidebar) commentsSidebar.hidden = false;
 
@@ -204,13 +203,23 @@ const CommentsEngine = (() => {
     try {
       pendingRange.surroundContents(span);
     } catch (e) {
-      const frag = pendingRange.extractContents();
-      span.appendChild(frag);
-      pendingRange.insertNode(span);
+      try {
+        const frag = pendingRange.extractContents();
+        span.appendChild(frag);
+        pendingRange.insertNode(span);
+      } catch (err) {
+        console.error("DOM Range fallback insertion aborted", err);
+        return;
+      }
     }
 
     const rect = span.getBoundingClientRect();
-    window.getSelection().removeAllRanges();
+    
+    // FIXED: Shift selection cleaning until AFTER coordinates have safely bound
+    setTimeout(() => {
+      window.getSelection()?.removeAllRanges();
+    }, 50);
+
     showFloatingComposer(cid, textQuote, rect);
   }
 
@@ -219,7 +228,12 @@ const CommentsEngine = (() => {
   // ------------------------------
   function renderCommentCards() {
     const activeTabId = typeof EditorEngine !== 'undefined' ? EditorEngine.getActiveTabId() : 'default-tab';
-    const sidebarList = document.getElementById('comments-list');
+    
+    // FIXED: Fallback selection to handle workspace side panels dynamically
+    let sidebarList = document.getElementById('comments-list');
+    if (!sidebarList) {
+      sidebarList = document.querySelector('.comments-panel .comments-list') || document.querySelector('.comments-list');
+    }
     if (!sidebarList) return;
     sidebarList.innerHTML = '';
 
@@ -232,9 +246,9 @@ const CommentsEngine = (() => {
 
     if (activeComments.length === 0) {
       sidebarList.innerHTML = `
-        <div class="empty-state">
+        <div class="empty-state" style="padding: 20px; text-align: center; color: #5f6368;">
           <p>Start a discussion</p>
-          <button class="primary-add-btn" id="sidebar-add-comment-btn">Add comment</button>
+          <button class="primary-add-btn" id="sidebar-add-comment-btn" style="background:#1a73e8; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Add comment</button>
         </div>
       `;
       const addBtn = sidebarList.querySelector('#sidebar-add-comment-btn');
@@ -253,7 +267,6 @@ const CommentsEngine = (() => {
       card.style.padding = '14px';
       card.style.background = '#ffffff';
       
-      // Updated card presentation structure to reflect anonymous profile details
       card.innerHTML = `
         <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; font-size:13px;">
           <div style="width:24px; height:24px; background-color:#e06666; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500;">Y</div>
