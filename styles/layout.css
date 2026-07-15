@@ -167,20 +167,35 @@ html, body {
 }
 
 .doc-page {
-  background: #ffffff;
-  width: 100%;
-  min-height: 1056px;
-  padding: 96px;
-  box-shadow: 0 1px 3px rgba(60,64,67,0.15);
-  border: 1px solid var(--border-subtle);
-  outline: none;
-  font-family: Arial, sans-serif;
-  font-size: 15px;
+  width: 8.5in; /* Standard US Letter width */
+  min-height: 11in; /* Standard US Letter height */
+  padding: 1in; /* Page margins */
+  margin: 2rem auto;
+  
+  /* The Magic Visual Pagination */
+  background-color: transparent;
+  background-image: 
+    linear-gradient(to bottom, 
+      white 0, 
+      white 10.5in, /* Page content area */
+      #f0f0f0 10.5in, /* Start of the gap between pages */
+      #f0f0f0 11in /* End of the gap */
+    );
+  background-size: 100% 11in; /* Repeats exactly every 11 inches */
+  
+  /* Adds a shadow to make the "pages" pop */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: 2px;
+  
+  /* Ensure proper line height so text doesn't split awkwardly across gaps */
   line-height: 1.5;
-  color: #000000;
-  word-break: break-word;
+  outline: none;
 }
 
+/* The background of the whole editor area needs to be the gap color */
+.editor-container {
+  background-color: #f0f0f0; 
+}
 .page-number {
   text-align: center;
   margin-top: 16px;
