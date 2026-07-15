@@ -1,5 +1,5 @@
 /**
- * app.js — App Orchestrator (updated for floating comment button)
+ * app.js — App Orchestrator
  */
 document.addEventListener('DOMContentLoaded', () => {
   EditorEngine.renderTabsSidebar();
@@ -140,19 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-// ─── FIX: Update click-outside listener to protect comment workspace elements ───
+  // ─── FIXED: Click‑outside whitelists floating composers and buttons ───
   document.addEventListener('click', (e) => {
-    const commentsSidebar = document.getElementById('docs-sidebar');
-    
     if (commentsSidebar && !commentsSidebar.hidden) {
       const isCommentBtn = e.target.closest('#comment-btn');
-      const isToolbarCommentBtn = e.target.closest('#add-comment-btn');
       const isSidebar = e.target.closest('#docs-sidebar');
       const isFloatingComposer = e.target.closest('.comment-floating-composer');
-      const isAnchor = e.target.closest('.comment-anchor');
-
-      // If the click is outside all allowed comment infrastructure elements, hide it
-      if (!isCommentBtn && !isToolbarCommentBtn && !isSidebar && !isFloatingComposer && !isAnchor) {
+      const isToolbarCommentBtn = e.target.closest('#add-comment-btn');
+      const isFloatingCommentBtn = e.target.closest('#floating-comment-btn');
+      
+      if (!isCommentBtn && !isSidebar && !isFloatingComposer && !isToolbarCommentBtn && !isFloatingCommentBtn) {
         commentsSidebar.hidden = true;
       }
     }
