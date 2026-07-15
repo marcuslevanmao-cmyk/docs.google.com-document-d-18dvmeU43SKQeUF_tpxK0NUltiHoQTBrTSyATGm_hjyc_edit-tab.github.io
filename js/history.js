@@ -1,6 +1,6 @@
 /**
  * history.js — Complete Version History Engine
- * Replicating Marcus le van mao's 8 essay drafts
+ * Replicating Marcus le van mao's 8 essay drafts (Corrected Data Keys)
  */
 const HistoryEngine = (() => {
   const authorName = "Marcus le van mao";
@@ -24,60 +24,61 @@ const HistoryEngine = (() => {
 </div>`;
 
   // --- 8 Historical States (Newest to Oldest) ---
+  // FIXED: Changed "content" to "htmlContent" so it matches editor.js
   let historyData = [
     {
       id: "v8", timestamp: "July 15, 1:00 PM", label: "Final Polish & Formatting", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "The Utility of Gods", content: finalEssay },
-        { id: "tab_2", title: "Brainstorm", content: brainstormContent }
+        { id: "tab_1", title: "The Utility of Gods", htmlContent: finalEssay },
+        { id: "tab_2", title: "Brainstorm", htmlContent: brainstormContent }
       ]
     },
     {
       id: "v7", timestamp: "July 15, 12:30 PM", label: "Refining the Conclusion", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "The Utility of Gods", content: finalEssay.replace("As society modernizes, the challenge is", "We need to try") },
-        { id: "tab_2", title: "Brainstorm", content: brainstormContent }
+        { id: "tab_1", title: "The Utility of Gods", htmlContent: finalEssay.replace("As society modernizes, the challenge is", "We need to try") },
+        { id: "tab_2", title: "Brainstorm", htmlContent: brainstormContent }
       ]
     },
     {
       id: "v6", timestamp: "July 15, 11:45 AM", label: "Adding Counter-arguments (Science)", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "The Utility of Gods", content: `<div style="font-family: Arial, sans-serif; font-size: 16px;"><p>Across history, civilizations around the world have independently developed religious traditions... The measure of a religion should not be the certainty of its supernatural claims but the quality of the human beings it helps create.</p><p>Religion has long served as one of humanity's most influential systems for moral education. Christianity, for example, spread complex ethical teachings through parables.</p><p>Yet, the rigid dogmas that ensure cohesion can also stifle progress. When religious doctrines are held as absolute, they inevitably clash with scientific discovery and philosophical inquiry.</p></div>` },
-        { id: "tab_2", title: "Brainstorm", content: brainstormContent }
+        { id: "tab_1", title: "The Utility of Gods", htmlContent: `<div style="font-family: Arial, sans-serif; font-size: 16px;"><p>Across history, civilizations around the world have independently developed religious traditions... The measure of a religion should not be the certainty of its supernatural claims but the quality of the human beings it helps create.</p><p>Religion has long served as one of humanity's most influential systems for moral education. Christianity, for example, spread complex ethical teachings through parables.</p><p>Yet, the rigid dogmas that ensure cohesion can also stifle progress. When religious doctrines are held as absolute, they inevitably clash with scientific discovery and philosophical inquiry.</p></div>` },
+        { id: "tab_2", title: "Brainstorm", htmlContent: brainstormContent }
       ]
     },
     {
       id: "v5", timestamp: "July 15, 11:00 AM", label: "Expanding on Christianity & Morals", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "The Utility of Gods", content: `<div style="font-family: Arial, sans-serif; font-size: 16px;"><p>Across history, civilizations around the world have independently developed religious traditions... The measure of a religion should not be the certainty of its supernatural claims but the quality of the human beings it helps create.</p><p>Religion has long served as one of humanity's most influential systems for moral education. Christianity, for example, spread complex ethical teachings through parables.</p></div>` },
-        { id: "tab_2", title: "Brainstorm", content: brainstormContent }
+        { id: "tab_1", title: "The Utility of Gods", htmlContent: `<div style="font-family: Arial, sans-serif; font-size: 16px;"><p>Across history, civilizations around the world have independently developed religious traditions... The measure of a religion should not be the certainty of its supernatural claims but the quality of the human beings it helps create.</p><p>Religion has long served as one of humanity's most influential systems for moral education. Christianity, for example, spread complex ethical teachings through parables.</p></div>` },
+        { id: "tab_2", title: "Brainstorm", htmlContent: brainstormContent }
       ]
     },
     {
       id: "v4", timestamp: "July 15, 10:15 AM", label: "First Paragraph Draft", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "The Utility of Gods", content: `<div style="font-family: Arial, sans-serif; font-size: 16px;"><p>Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature. Religion has been one of humanity's most effective systems for organizing communities.</p></div>` },
-        { id: "tab_2", title: "Brainstorm", content: brainstormContent }
+        { id: "tab_1", title: "The Utility of Gods", htmlContent: `<div style="font-family: Arial, sans-serif; font-size: 16px;"><p>Across history, civilizations around the world have independently developed religious traditions, suggesting that these beliefs address something fundamental about human nature. Religion has been one of humanity's most effective systems for organizing communities.</p></div>` },
+        { id: "tab_2", title: "Brainstorm", htmlContent: brainstormContent }
       ]
     },
     {
       id: "v3", timestamp: "July 15, 9:45 AM", label: "Brainstorming & Outline", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "Untitled Document", content: `<div><br></div>` },
-        { id: "tab_2", title: "Brainstorm", content: brainstormContent }
+        { id: "tab_1", title: "Untitled Document", htmlContent: `<div><br></div>` },
+        { id: "tab_2", title: "Brainstorm", htmlContent: brainstormContent }
       ]
     },
     {
       id: "v2", timestamp: "July 15, 9:15 AM", label: "Initial Thoughts", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "Untitled Document", content: `<div><br></div>` },
-        { id: "tab_2", title: "Untitled Document", content: `<div>Why religion? Good for society, bad for science maybe?</div>` }
+        { id: "tab_1", title: "Untitled Document", htmlContent: `<div><br></div>` },
+        { id: "tab_2", title: "Untitled Document", htmlContent: `<div>Why religion? Good for society, bad for science maybe?</div>` }
       ]
     },
     {
       id: "v1", timestamp: "July 15, 9:00 AM", label: "Created Document", author: authorName,
       tabsState: [
-        { id: "tab_1", title: "Untitled Document", content: `<div><br></div>` }
+        { id: "tab_1", title: "Untitled Document", htmlContent: `<div><br></div>` }
       ]
     }
   ];
@@ -122,7 +123,8 @@ const HistoryEngine = (() => {
     
     // We display Tab 1 by default in the preview pane
     const primaryTab = historyData[index].tabsState[0];
-    previewBox.innerHTML = primaryTab ? primaryTab.content : '<div>No content</div>';
+    // FIXED: Call primaryTab.htmlContent instead of primaryTab.content
+    previewBox.innerHTML = primaryTab && primaryTab.htmlContent ? primaryTab.htmlContent : '<div>No content</div>';
   }
 
   function getSelectedPreviewIndex() {
@@ -133,12 +135,11 @@ const HistoryEngine = (() => {
     const targetState = historyData[index];
     if (!targetState) return;
 
-    // Use window.restoreFullDocumentState if it exists globally, otherwise modify localStorage
     if (typeof window.restoreFullDocumentState === 'function') {
       window.restoreFullDocumentState(targetState.tabsState);
     } else {
       localStorage.setItem('docs_tab_contents', JSON.stringify(targetState.tabsState));
-      location.reload(); // Quick refresh to apply states smoothly without breaking EditorEngine
+      location.reload(); 
     }
   }
 
@@ -150,7 +151,7 @@ const HistoryEngine = (() => {
       timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
       label: label || 'Manual Edit',
       author: authorName,
-      tabsState: JSON.parse(JSON.stringify(EditorEngine.getTabs())) // Deep copy current tabs
+      tabsState: JSON.parse(JSON.stringify(EditorEngine.getTabs())) 
     };
     
     historyData.unshift(newSnapshot);
@@ -158,7 +159,6 @@ const HistoryEngine = (() => {
     renderHistorySidebar();
   }
 
-  // Auto-init visual selection
   document.addEventListener('DOMContentLoaded', () => {
       previewSnapshot(0);
   });
@@ -168,6 +168,6 @@ const HistoryEngine = (() => {
     getSelectedPreviewIndex,
     rollbackTo,
     captureSnapshot,
-    renderHistorySidebar // Exposing for app.js to call directly
+    renderHistorySidebar
   };
 })();
