@@ -1,4 +1,3 @@
-<!-- index.html (unchanged except for the initial doc-title value, keep as is) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -122,11 +121,13 @@
       </button>
       <span class="toolbar-sep"></span>
 
-   <button class="toolbar-btn" id="add-comment-btn" title="Add comment">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-  </svg>
-</button>
+      <!-- Comment button – ID updated to match new JS -->
+      <button class="toolbar-btn" id="add-comment-btn" title="Add comment">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <!-- WORKSPACE -->
@@ -141,63 +142,65 @@
       <div class="tabs-list" id="tabs-container"></div>
     </aside>
 
-<div class="workspace-wrapper">
-  <!-- Main canvas -->
-  <main class="workspace" id="workspace">
-    <div class="canvas-scroll-container" id="canvas-scroll-container">
-      <div class="doc-canvas" id="doc-canvas">
-        <div class="ruler">…</div>
-        <div id="pages-container"></div>
+    <!-- Main canvas -->
+    <main class="workspace" id="workspace">
+      <div class="canvas-scroll-container" id="canvas-scroll-container">
+        <div class="doc-canvas" id="doc-canvas">
+          <div class="ruler">
+            <div class="ruler-track">
+              <div class="ruler-face"></div>
+              <div class="ruler-margin-marker" style="left:96px;"></div>
+              <div class="ruler-margin-marker" style="right:96px;"></div>
+            </div>
+          </div>
+          <div id="pages-container"></div>
+        </div>
       </div>
-    </div>
-  </main>
-<div class="workspace-wrapper">
-  <!-- Main canvas -->
-  <main class="workspace" id="workspace">…</main>
-  <!-- Comments sidebar -->
+    </main>
 
- <!-- Google Docs Style Comments Sidebar -->
-<aside class="docs-sidebar" id="docs-sidebar" hidden>
-  <!-- Header -->
-  <div class="sidebar-header">
-    <h3>Comments</h3>
-    <div class="header-icons">
-      <button class="icon-btn" id="close-comments-btn" title="Close comments">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-  </div>
+    <!-- Google Docs Style Comments Sidebar -->
+    <aside class="docs-sidebar" id="docs-sidebar" hidden>
+      <!-- Header -->
+      <div class="sidebar-header">
+        <h3>Comments</h3>
+        <div class="header-icons">
+          <button class="icon-btn" id="close-comments-btn" title="Close comments">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
-  <!-- Tabs -->
-  <div class="sidebar-tabs">
-    <div class="tab active">All comments</div>
-    <div class="tab">For you</div>
-  </div>
+      <!-- Tabs -->
+      <div class="sidebar-tabs">
+        <div class="tab active">All comments</div>
+        <div class="tab">For you</div>
+      </div>
 
-  <!-- Filters -->
-  <div class="sidebar-filters">
-    <button class="filter-btn">All types <span class="dropdown-arrow">▾</span></button>
-    <button class="filter-btn">All tabs <span class="dropdown-arrow">▾</span></button>
-  </div>
+      <!-- Filters -->
+      <div class="sidebar-filters">
+        <button class="filter-btn">All types <span class="dropdown-arrow">▾</span></button>
+        <button class="filter-btn">All tabs <span class="dropdown-arrow">▾</span></button>
+      </div>
 
-  <!-- Comments List (populated by JavaScript) -->
-  <div class="sidebar-content" id="comments-list">
-    <div class="empty-state">
-      <p>Start a discussion</p>
-      <button class="primary-add-btn" id="sidebar-add-comment-btn">Add comment</button>
-    </div>
-  </div>
+      <!-- Comments List (populated by JavaScript) -->
+      <div class="sidebar-content" id="comments-list">
+        <div class="empty-state">
+          <p>Start a discussion</p>
+          <button class="primary-add-btn" id="sidebar-add-comment-btn">Add comment</button>
+        </div>
+      </div>
 
-  <!-- Footer -->
-  <div class="sidebar-footer">
-    <p><strong>Who sees comments?</strong><br>
-    Your comments will be seen by anyone who can comment or edit this document. <a href="#">Learn more</a></p>
+      <!-- Footer -->
+      <div class="sidebar-footer">
+        <p><strong>Who sees comments?</strong><br>
+        Your comments will be seen by anyone who can comment or edit this document. <a href="#">Learn more</a></p>
+      </div>
+    </aside>
   </div>
-</aside>
-  <aside class="docs-sidebar" id="docs-sidebar" hidden>…</aside>
 </div>
+
 <!-- ===== VERSION HISTORY OVERLAY ===== -->
 <div id="version-history-view" hidden>
   <div style="display:flex; flex-direction:column; height:100vh;">
