@@ -50,13 +50,14 @@ const CommentsEngine = (() => {
       reflectAddCommentButtonState();
     });
 
+    // FIXED: Protect action buttons so clicking them doesn't instantly wipe the selection
     document.addEventListener('mousedown', (e) => {
-      const isPage = e.target.closest('.doc-page');
-      const isComposer = e.target.closest('.comment-floating-composer');
-      const isToolbarBtn = e.target.closest('#add-comment-btn');
-      const isSidebarBtn = e.target.closest('#sidebar-add-comment-btn');
-
-      if (!isPage && !isComposer && !isToolbarBtn && !isSidebarBtn) {
+      if (
+        !e.target.closest('.doc-page') && 
+        !e.target.closest('.comment-floating-composer') &&
+        !e.target.closest('#add-comment-btn') &&
+        !e.target.closest('#floating-comment-btn')
+      ) {
         pendingRange = null;
         reflectAddCommentButtonState();
       }
@@ -64,6 +65,7 @@ const CommentsEngine = (() => {
   }
 
   function reflectAddCommentButtonState() {
+    // FIXED: Target correct element #add-comment-btn
     const btn = document.getElementById('add-comment-btn');
     if (btn) btn.disabled = !pendingRange;
   }
@@ -91,11 +93,16 @@ const CommentsEngine = (() => {
     popup.style.width = '340px';
     popup.style.zIndex = '1000';
 
+    // ─── FIXED: Replaced profile with Anonymous Pink Profile View and "You" title ───
     popup.innerHTML = `
       <div class="docs-hover-card">
-        <div class="card-header">
-          <div class="avatar" style="background-color: #e06666; color: white;">Y</div>
-          <span class="user-name">You</span>
+        <div class="card-header" style="display: flex; align-items: center; gap: 8px;">
+          <div class="avatar" style="background-color: #ff80ab; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+          </div>
+          <span class="user-name" style="font-weight: 500; color: #1f1f1f;">You</span>
         </div>
         
         <div class="card-input-container">
@@ -128,13 +135,6 @@ const CommentsEngine = (() => {
       }
     });
 
-    textarea.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey && textarea.value.trim()) {
-        e.preventDefault();
-        commentBtn.click();
-      }
-    });
-
     const cleanUp = () => {
       removeAnchor(cid);
       closePopup();
@@ -143,15 +143,15 @@ const CommentsEngine = (() => {
     };
 
     cancelBtn.addEventListener('click', cleanUp);
+    popup.querySelector('.close-popup-btn')?.addEventListener('click', cleanUp);
 
     commentBtn.addEventListener('click', () => {
       const body = textarea.value.trim();
       if (!body) return;
 
-      const activeTabId = typeof EditorEngine !== 'undefined' ? EditorEngine.getActiveTabId() : 'default-tab';
-      
-      const canvasEl = document.querySelector('.doc-canvas');
-      const canvasRect = canvasEl ? canvasEl.getBoundingClientRect() : { top: 0 };
+      const activeTabId = EditorEngine.getActiveTabId();
+      const canvasEl = document.getElementById('doc-canvas');
+      const canvasRect = canvasEl.getBoundingClientRect();
       const relativeTop = rangeRect.top - canvasRect.top + window.scrollY;
 
       comments.set(cid, {
@@ -163,11 +163,10 @@ const CommentsEngine = (() => {
         topOffset: relativeTop
       });
 
-      // FORCE VISIBILITY: Overwrite display styles to override any conflict from app.js click listeners
-      const commentsSidebar = document.getElementById('docs-sidebar') || document.querySelector('.comments-panel');
+      // FIXED: Forces the comments panel to display automatically on comment confirmation
+      const commentsSidebar = document.getElementById('docs-sidebar');
       if (commentsSidebar) {
         commentsSidebar.hidden = false;
-        commentsSidebar.style.display = 'flex'; // Explicit layout declaration
       }
 
       renderCommentCards();
@@ -206,22 +205,13 @@ const CommentsEngine = (() => {
     try {
       pendingRange.surroundContents(span);
     } catch (e) {
-      try {
-        const frag = pendingRange.extractContents();
-        span.appendChild(frag);
-        pendingRange.insertNode(span);
-      } catch (err) {
-        console.error("DOM insertion fallback error", err);
-        return;
-      }
+      const frag = pendingRange.extractContents();
+      span.appendChild(frag);
+      pendingRange.insertNode(span);
     }
 
     const rect = span.getBoundingClientRect();
-    
-    setTimeout(() => {
-      window.getSelection()?.removeAllRanges();
-    }, 50);
-
+    window.getSelection().removeAllRanges();
     showFloatingComposer(cid, textQuote, rect);
   }
 
@@ -229,28 +219,32 @@ const CommentsEngine = (() => {
   // 3. Hanging Margin Cards Render
   // ------------------------------
   function renderCommentCards() {
-    const activeTabId = typeof EditorEngine !== 'undefined' ? EditorEngine.getActiveTabId() : 'default-tab';
-    
-    let sidebarList = document.getElementById('comments-list');
-    if (!sidebarList) {
-      sidebarList = document.querySelector('.comments-panel .comments-list') || document.querySelector('.comments-list');
-    }
+    const activeTabId = EditorEngine.getActiveTabId();
+    const sidebarList = document.getElementById('comments-list');
     if (!sidebarList) return;
     sidebarList.innerHTML = '';
 
     const activeComments = [];
     comments.forEach((c, key) => {
       if (!c.resolved && c.tabId === activeTabId) {
-        activeComments.push([key, c]);
+        const anchorExists = document.querySelector(`span[data-comment-id="${c.id}"]`);
+        if (anchorExists) {
+          activeComments.push([key, c]);
+        }
       }
     });
 
     if (activeComments.length === 0) {
       sidebarList.innerHTML = `
-        <div class="empty-state" style="padding: 20px; text-align: center; color: #5f6368;">
+        <div class="empty-state">
           <p>Start a discussion</p>
+          <button class="primary-add-btn" id="sidebar-add-comment-btn">Add comment</button>
         </div>
       `;
+      const addBtn = sidebarList.querySelector('#sidebar-add-comment-btn');
+      if (addBtn) {
+        addBtn.addEventListener('click', () => promptForCommentOnSelection());
+      }
       return;
     }
 
@@ -262,11 +256,15 @@ const CommentsEngine = (() => {
       card.style.border = '1px solid #e0e0e0';
       card.style.padding = '14px';
       card.style.background = '#ffffff';
-      card.style.boxShadow = '0 1px 2px rgba(60,64,67,0.3)';
       
+      // FIXED: Updated sidebar card list profiles to feature matching pink user layout
       card.innerHTML = `
-        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; font-size:13px;">
-          <div style="width:24px; height:24px; background-color:#e06666; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500;">Y</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:13px;">
+          <div style="background-color:#ff80ab; display:flex; align-items:center; justify-content:center; border-radius:50%; width:24px; height:24px; color:white;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+          </div>
           <div style="display:flex; flex-direction:column;">
             <span style="font-weight:500; color:#1f1f1f;">You</span>
             <span style="color:#5f6368; font-size:11px;">${new Date().toLocaleDateString()}</span>
@@ -275,8 +273,8 @@ const CommentsEngine = (() => {
         <div style="font-style:italic; color:#5f6368; font-size:13px; margin-bottom:6px; background:#f8f9fa; padding:6px 8px; border-left:2px solid #dadce0;">
           “${c.quote}”
         </div>
-        <div style="font-size:14px; color:#1f1f1f; margin-bottom:10px; padding-left:4px;">${c.body}</div>
-        <div style="display:flex; gap:12px; padding-left:4px;">
+        <div style="font-size:14px; color:#1f1f1f; margin-bottom:10px;">${c.body}</div>
+        <div style="display:flex; gap:12px;">
           <button data-act="resolve" style="background:none; border:none; color:#0b57d0; font-size:12px; font-weight:500; cursor:pointer;">Resolve</button>
           <button data-act="delete" style="background:none; border:none; color:#ea4335; font-size:12px; font-weight:500; cursor:pointer;">Delete</button>
         </div>
