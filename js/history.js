@@ -330,7 +330,7 @@ const HistoryEngine = (() => {
             dateObj: now,
             displayDate: displayDate,
             dayGroup: dayGroup,
-            author: "You",
+            author: "Marcus Le Van Mao",
             authorColor: "#4285f4",
             description: description || "Edited",
             tabsState: _getCurrentTabsState()
