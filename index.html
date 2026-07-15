@@ -57,7 +57,19 @@
         }
 
         ::selection {
-            background: rgba(26, 115, 232, 0.3);
+            background: rgba(26, 115, 232, .25);
+        }
+
+        /* ===== Google Docs Cursor ===== */
+        .doc-page {
+            caret-color: #202124;
+        }
+        .doc-page * {
+            caret-color: #202124;
+        }
+        /* Thin cursor via caret-color + contenteditable default */
+        .doc-page:focus {
+            outline: none;
         }
 
         .app-shell {
@@ -91,6 +103,7 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            height: 100%;
         }
 
         .sidebar-header {
@@ -104,6 +117,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .add-tab-btn {
@@ -136,12 +150,14 @@
             align-items: center;
             justify-content: space-between;
             padding: 6px 12px 6px 16px;
+            padding-top: 7px;
             cursor: pointer;
             border-radius: 0 24px 24px 0;
             margin-right: 8px;
             font-size: 14px;
             color: var(--text-primary);
             gap: 8px;
+            transition: background-color .12s ease, color .12s ease;
         }
         .tab-item-row:hover {
             background: #f1f3f4;
@@ -210,7 +226,7 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: visible;
-            padding: 24px 0;
+            padding: 52px 0 24px 0;
             display: flex;
             justify-content: center;
         }
@@ -239,9 +255,10 @@
             color: #202124;
             -webkit-font-smoothing: antialiased;
             transition: box-shadow .12s ease;
+            caret-color: #202124;
         }
         .doc-page:hover {
-            box-shadow: 0 2px 6px rgba(60, 64, 67, .18), 0 8px 20px rgba(60, 64, 67, .1);
+            box-shadow: 0 2px 4px rgba(60, 64, 67, .15), 0 6px 12px rgba(60, 64, 67, .1);
         }
         .doc-page:focus {
             outline: none;
@@ -249,6 +266,7 @@
         .doc-page * {
             max-width: 100%;
             box-sizing: border-box;
+            caret-color: #202124;
         }
         .doc-page p {
             max-width: 660px;
@@ -280,6 +298,7 @@
 
         .editor-container {
             background-color: #f1f3f4;
+            padding-top: 52px;
         }
         .page-number {
             text-align: center;
@@ -306,7 +325,7 @@
             border: 1px solid var(--border-strong);
             border-radius: 8px;
             padding: 12px;
-            margin-left: 20px;
+            margin-left: 30px;
             box-shadow: 0 1px 2px rgba(60, 64, 67, .3), 0 1px 3px rgba(60, 64, 67, .15);
             pointer-events: auto;
             cursor: pointer;
@@ -493,7 +512,7 @@
             background: #ffffff;
             border: 1px solid #dadce0;
             border-radius: 8px;
-            padding: 14px;
+            padding: 16px;
             margin-bottom: 12px;
             transition: box-shadow 0.15s, border-color 0.15s;
             box-shadow: 0 1px 2px rgba(60, 64, 67, .3), 0 1px 3px rgba(60, 64, 67, .15);
@@ -865,8 +884,9 @@
         }
 
         .doc-title {
-            font-size: 36px;
+            font-size: 18px;
             font-weight: 400;
+            height: 28px;
             color: #202124;
             border: 1px solid transparent;
             background: transparent;
@@ -916,9 +936,11 @@
             cursor: pointer;
             user-select: none;
             line-height: 28px;
+            transition: background-color .12s ease;
         }
         .menubar span:hover {
-            background: rgba(0, 0, 0, 0.05);
+            background: #f1f3f4;
+            border-radius: 4px;
         }
 
         .header-actions {
@@ -939,7 +961,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background-color .12s ease;
+            transition: background-color .12s ease, color .12s ease;
         }
         .icon-btn:hover,
         .toolbar-btn:hover {
@@ -1007,6 +1029,7 @@
             cursor: pointer;
             outline: none;
             height: 28px;
+            transition: background-color .12s ease;
         }
         .toolbar-select:hover {
             background: #f1f3f4;
@@ -1033,6 +1056,7 @@
             font-size: 15px;
             font-weight: bold;
             border-radius: 2px;
+            color: #5f6368;
         }
         .font-size-input {
             width: 42px;
@@ -1044,6 +1068,7 @@
             border-radius: 2px;
             outline: none;
             background: transparent;
+            color: #202124;
         }
         .font-size-input:focus {
             outline: 2px solid var(--accent-blue);
@@ -1301,8 +1326,9 @@
                 display: none;
             }
             .doc-title {
-                font-size: 24px;
-                max-width: 160px;
+                font-size: 16px;
+                max-width: 140px;
+                height: 24px;
             }
             .menubar span {
                 padding: 0 8px;
@@ -1316,6 +1342,9 @@
             }
             .margin-comments-track {
                 display: none;
+            }
+            .canvas-scroll-container {
+                padding-top: 32px;
             }
         }
         @media (max-width: 640px) {
@@ -1340,8 +1369,9 @@
                 padding: 24px 20px 80px 20px;
             }
             .doc-title {
-                font-size: 20px;
-                max-width: 120px;
+                font-size: 14px;
+                max-width: 100px;
+                height: 22px;
             }
             .header-top {
                 flex-wrap: wrap;
@@ -1409,6 +1439,9 @@
             .restore-action-btn {
                 padding: 4px 12px;
                 font-size: 12px;
+            }
+            .canvas-scroll-container {
+                padding-top: 20px;
             }
         }
     </style>
@@ -1522,6 +1555,10 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 21h18v-2H3v2zm6-4h12v-2H9v2zm-6-4h18v-2H3v2zm6-4h12V7H9v2zm-6-4v2h18V3H3z"/></svg>
                 </button>
                 <span class="toolbar-sep"></span>
+
+                <button class="toolbar-btn" data-action="link" id="link-btn" title="Insert link (Ctrl+K)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                </button>
 
                 <button class="toolbar-btn" id="add-comment-btn" title="Add comment">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2450,7 +2487,7 @@
                 const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
                 const displayHour = hours % 12 || 12;
                 const displayDate =
-                `${now.toLocaleString('en', { month: 'short' })} ${now.getDate()}, ${displayHour}:${mins} ${ampm}`;
+                    `${now.toLocaleString('en', { month: 'short' })} ${now.getDate()}, ${displayHour}:${mins} ${ampm}`;
                 const dayGroup = now.toLocaleString('en', { weekday: 'long' });
 
                 return {
@@ -3027,7 +3064,7 @@
                         document.querySelectorAll('.comment-anchor').forEach(a => a.classList.remove('active'));
                         anchor.classList.add('active');
                         document.querySelectorAll('.docs-comment-card').forEach(card => card.classList.remove(
-                        'active-comment'));
+                            'active-comment'));
                         const sidebarCard = document.querySelector(
                             `.docs-comment-card[data-comment-id="${c.id}"]`);
                         if (sidebarCard) sidebarCard.classList.add('active-comment');
@@ -3316,6 +3353,13 @@
                             EditorEngine.saveCurrentTabContent();
                             EditorEngine.saveToLocalStorage();
                         }
+                    } else if (action === 'link') {
+                        const url = prompt("Enter URL:", "https://");
+                        if (url) {
+                            document.execCommand('createLink', false, url);
+                            EditorEngine.saveCurrentTabContent();
+                            EditorEngine.saveToLocalStorage();
+                        }
                     }
                 });
             });
@@ -3385,6 +3429,40 @@
                     changeFontSize((parseInt(fontSizeInput?.value) || 11) + 1);
                 });
             }
+
+            // Keyboard shortcuts: Ctrl+B, Ctrl+I, Ctrl+Z, Ctrl+Shift+Z, Ctrl+K
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+                    const key = e.key.toLowerCase();
+                    if (key === 'b') { e.preventDefault();
+                        document.execCommand('bold', false, null);
+                        EditorEngine.saveCurrentTabContent();
+                        EditorEngine.saveToLocalStorage(); } else if (key === 'i') { e.preventDefault();
+                        document.execCommand('italic', false, null);
+                        EditorEngine.saveCurrentTabContent();
+                        EditorEngine.saveToLocalStorage(); } else if (key === 'u') { e.preventDefault();
+                        document.execCommand('underline', false, null);
+                        EditorEngine.saveCurrentTabContent();
+                        EditorEngine.saveToLocalStorage(); } else if (key === 'z') { e.preventDefault();
+                        document.execCommand('undo', false, null);
+                        EditorEngine.saveCurrentTabContent();
+                        EditorEngine.saveToLocalStorage(); } else if (key === 'k') { e.preventDefault();
+                        const url = prompt("Enter URL:", "https://");
+                        if (url) {
+                            document.execCommand('createLink', false, url);
+                            EditorEngine.saveCurrentTabContent();
+                            EditorEngine.saveToLocalStorage();
+                        }
+                    }
+                } else if (e.ctrlKey && e.shiftKey && !e.altKey) {
+                    if (e.key.toLowerCase() === 'z') {
+                        e.preventDefault();
+                        document.execCommand('redo', false, null);
+                        EditorEngine.saveCurrentTabContent();
+                        EditorEngine.saveToLocalStorage();
+                    }
+                }
+            });
 
             EditorEngine.renderTabsSidebar();
             EditorEngine.loadActiveTabContent();
