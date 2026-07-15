@@ -50,7 +50,6 @@ const CommentsEngine = (() => {
       reflectAddCommentButtonState();
     });
 
-    // Clear selection when clicking outside, EXCEPT when clicking comment elements/buttons
     document.addEventListener('mousedown', (e) => {
       const isPage = e.target.closest('.doc-page');
       const isComposer = e.target.closest('.comment-floating-composer');
@@ -65,7 +64,6 @@ const CommentsEngine = (() => {
   }
 
   function reflectAddCommentButtonState() {
-    // Sync with the actual toolbar button ID in your HTML
     const btn = document.getElementById('add-comment-btn');
     if (btn) btn.disabled = !pendingRange;
   }
@@ -93,11 +91,12 @@ const CommentsEngine = (() => {
     popup.style.width = '340px';
     popup.style.zIndex = '1000';
 
+    // Updated profile name to "You" and custom pink background color
     popup.innerHTML = `
       <div class="docs-hover-card">
         <div class="card-header">
-          <div class="avatar">M</div>
-          <span class="user-name">Marcus Le Van Mao élève</span>
+          <div class="avatar" style="background-color: #e06666; color: white;">Y</div>
+          <span class="user-name">You</span>
         </div>
         
         <div class="card-input-container">
@@ -130,7 +129,6 @@ const CommentsEngine = (() => {
       }
     });
 
-    // Support submitting by pressing "Enter" key
     textarea.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey && textarea.value.trim()) {
         e.preventDefault();
@@ -152,7 +150,9 @@ const CommentsEngine = (() => {
       if (!body) return;
 
       const activeTabId = typeof EditorEngine !== 'undefined' ? EditorEngine.getActiveTabId() : 'default-tab';
-      const canvasEl = document.getElementById('doc-canvas');
+      
+      // FIXED: Swapped from id selector '#doc-canvas' to class selector '.doc-canvas'
+      const canvasEl = document.querySelector('.doc-canvas');
       const canvasRect = canvasEl ? canvasEl.getBoundingClientRect() : { top: 0 };
       const relativeTop = rangeRect.top - canvasRect.top + window.scrollY;
 
@@ -165,7 +165,6 @@ const CommentsEngine = (() => {
         topOffset: relativeTop
       });
 
-      // Automatically reveal the sidebar so they can see their fresh comment card!
       const commentsSidebar = document.getElementById('docs-sidebar');
       if (commentsSidebar) commentsSidebar.hidden = false;
 
@@ -227,7 +226,6 @@ const CommentsEngine = (() => {
     const activeComments = [];
     comments.forEach((c, key) => {
       if (!c.resolved && c.tabId === activeTabId) {
-        // Fallback: if the visual text anchor was destroyed, we still show the card
         activeComments.push([key, c]);
       }
     });
@@ -255,16 +253,20 @@ const CommentsEngine = (() => {
       card.style.padding = '14px';
       card.style.background = '#ffffff';
       
+      // Updated card presentation structure to reflect anonymous profile details
       card.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:13px;">
-          <span style="font-weight:500; color:#1f1f1f;">Marcus Le Van Mao</span>
-          <span style="color:#5f6368; font-size:12px;">${new Date().toLocaleDateString()}</span>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; font-size:13px;">
+          <div style="width:24px; height:24px; background-color:#e06666; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500;">Y</div>
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-weight:500; color:#1f1f1f;">You</span>
+            <span style="color:#5f6368; font-size:11px;">${new Date().toLocaleDateString()}</span>
+          </div>
         </div>
         <div style="font-style:italic; color:#5f6368; font-size:13px; margin-bottom:6px; background:#f8f9fa; padding:6px 8px; border-left:2px solid #dadce0;">
           “${c.quote}”
         </div>
-        <div style="font-size:14px; color:#1f1f1f; margin-bottom:10px;">${c.body}</div>
-        <div style="display:flex; gap:12px;">
+        <div style="font-size:14px; color:#1f1f1f; margin-bottom:10px; padding-left:4px;">${c.body}</div>
+        <div style="display:flex; gap:12px; padding-left:4px;">
           <button data-act="resolve" style="background:none; border:none; color:#0b57d0; font-size:12px; font-weight:500; cursor:pointer;">Resolve</button>
           <button data-act="delete" style="background:none; border:none; color:#ea4335; font-size:12px; font-weight:500; cursor:pointer;">Delete</button>
         </div>
@@ -290,9 +292,6 @@ const CommentsEngine = (() => {
     });
   }
 
-  // ------------------------------
-  // 4. Public API
-  // ------------------------------
   return {
     bindSelectionListener,
     promptForCommentOnSelection,
