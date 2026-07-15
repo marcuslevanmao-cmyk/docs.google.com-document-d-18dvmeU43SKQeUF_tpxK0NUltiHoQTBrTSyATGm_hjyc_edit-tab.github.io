@@ -163,9 +163,12 @@ const CommentsEngine = (() => {
         topOffset: relativeTop
       });
 
-      // Force-reveal comment system wrappers
-      const commentsSidebar = document.getElementById('docs-sidebar');
-      if (commentsSidebar) commentsSidebar.hidden = false;
+      // FORCE VISIBILITY: Overwrite display styles to override any conflict from app.js click listeners
+      const commentsSidebar = document.getElementById('docs-sidebar') || document.querySelector('.comments-panel');
+      if (commentsSidebar) {
+        commentsSidebar.hidden = false;
+        commentsSidebar.style.display = 'flex'; // Explicit layout declaration
+      }
 
       renderCommentCards();
       closePopup();
@@ -208,14 +211,13 @@ const CommentsEngine = (() => {
         span.appendChild(frag);
         pendingRange.insertNode(span);
       } catch (err) {
-        console.error("DOM Range fallback insertion aborted", err);
+        console.error("DOM insertion fallback error", err);
         return;
       }
     }
 
     const rect = span.getBoundingClientRect();
     
-    // FIXED: Shift selection cleaning until AFTER coordinates have safely bound
     setTimeout(() => {
       window.getSelection()?.removeAllRanges();
     }, 50);
@@ -229,7 +231,6 @@ const CommentsEngine = (() => {
   function renderCommentCards() {
     const activeTabId = typeof EditorEngine !== 'undefined' ? EditorEngine.getActiveTabId() : 'default-tab';
     
-    // FIXED: Fallback selection to handle workspace side panels dynamically
     let sidebarList = document.getElementById('comments-list');
     if (!sidebarList) {
       sidebarList = document.querySelector('.comments-panel .comments-list') || document.querySelector('.comments-list');
@@ -248,13 +249,8 @@ const CommentsEngine = (() => {
       sidebarList.innerHTML = `
         <div class="empty-state" style="padding: 20px; text-align: center; color: #5f6368;">
           <p>Start a discussion</p>
-          <button class="primary-add-btn" id="sidebar-add-comment-btn" style="background:#1a73e8; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Add comment</button>
         </div>
       `;
-      const addBtn = sidebarList.querySelector('#sidebar-add-comment-btn');
-      if (addBtn) {
-        addBtn.addEventListener('click', () => promptForCommentOnSelection());
-      }
       return;
     }
 
@@ -266,6 +262,7 @@ const CommentsEngine = (() => {
       card.style.border = '1px solid #e0e0e0';
       card.style.padding = '14px';
       card.style.background = '#ffffff';
+      card.style.boxShadow = '0 1px 2px rgba(60,64,67,0.3)';
       
       card.innerHTML = `
         <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; font-size:13px;">
