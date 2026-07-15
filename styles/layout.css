@@ -205,16 +205,16 @@ html, body {
 
 /* Comments Sidebar Container */
 .comments-sidebar {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 300px;
+  flex: 0 0 320px;  /* fixed width, don't shrink */
+  width: 320px;
   height: 100%;
   background: white;
   border-left: 1px solid #dadce0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   z-index: 1000;
+  position: relative;  /* not absolute */
 }
 
 .comments-sidebar[hidden],
