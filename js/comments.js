@@ -9,7 +9,7 @@ const CommentsEngine = (() => {
   let activePopup = null;
 
   // ------------------------------
-  // 1. Selection Listener
+  // 1. Selection Listener (attached to the editable page via delegation)
   // ------------------------------
   function bindSelectionListener() {
     const pagesContainer = document.getElementById('pages-container');
@@ -50,14 +50,9 @@ const CommentsEngine = (() => {
       reflectAddCommentButtonState();
     });
 
-    // FIXED: Protect action buttons so clicking them doesn't instantly wipe the selection
+    // Clear selection when clicking outside the page
     document.addEventListener('mousedown', (e) => {
-      if (
-        !e.target.closest('.doc-page') && 
-        !e.target.closest('.comment-floating-composer') &&
-        !e.target.closest('#add-comment-btn') &&
-        !e.target.closest('#floating-comment-btn')
-      ) {
+      if (!e.target.closest('.doc-page') && !e.target.closest('.comment-floating-composer')) {
         pendingRange = null;
         reflectAddCommentButtonState();
       }
@@ -65,8 +60,8 @@ const CommentsEngine = (() => {
   }
 
   function reflectAddCommentButtonState() {
-    // FIXED: Target correct element #add-comment-btn
-    const btn = document.getElementById('add-comment-btn');
+    // FIXED: Changed from 'toolbar-comment-btn' to match index.html
+    const btn = document.getElementById('add-comment-btn'); 
     if (btn) btn.disabled = !pendingRange;
   }
 
@@ -82,27 +77,25 @@ const CommentsEngine = (() => {
     const popup = document.createElement('div');
     popup.className = 'comment-floating-composer';
     
+    // FIXED: Uses 'absolute' positioning with scroll offsets to anchor cleanly to the layout
     let left = rangeRect.left + window.scrollX;
     let top = rangeRect.bottom + window.scrollY + 10;
-    if (left + 340 > window.innerWidth) left = window.innerWidth - 350;
-    if (top + 200 > window.innerHeight) top = rangeRect.top + window.scrollY - 200;
+    
+    if (rangeRect.left + 340 > window.innerWidth) {
+      left = window.innerWidth + window.scrollX - 350;
+    }
+    if (rangeRect.bottom + 200 > window.innerHeight) {
+      top = rangeRect.top + window.scrollY - 210;
+    }
 
-    popup.style.position = 'fixed';
     popup.style.left = left + 'px';
     popup.style.top = top + 'px';
-    popup.style.width = '340px';
-    popup.style.zIndex = '1000';
 
-    // ─── FIXED: Replaced profile with Anonymous Pink Profile View and "You" title ───
     popup.innerHTML = `
       <div class="docs-hover-card">
-        <div class="card-header" style="display: flex; align-items: center; gap: 8px;">
-          <div class="avatar" style="background-color: #ff80ab; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-            </svg>
-          </div>
-          <span class="user-name" style="font-weight: 500; color: #1f1f1f;">You</span>
+        <div class="card-header">
+          <div class="avatar">M</div>
+          <span class="user-name">Marcus Le Van Mao élève</span>
         </div>
         
         <div class="card-input-container">
@@ -143,7 +136,6 @@ const CommentsEngine = (() => {
     };
 
     cancelBtn.addEventListener('click', cleanUp);
-    popup.querySelector('.close-popup-btn')?.addEventListener('click', cleanUp);
 
     commentBtn.addEventListener('click', () => {
       const body = textarea.value.trim();
@@ -163,11 +155,10 @@ const CommentsEngine = (() => {
         topOffset: relativeTop
       });
 
-      // FIXED: Forces the comments panel to display automatically on comment confirmation
-      const commentsSidebar = document.getElementById('docs-sidebar');
-      if (commentsSidebar) {
-        commentsSidebar.hidden = false;
-      }
+      // Remove the vibrant temporary '.active' highlight color state from text anchor
+      document.querySelectorAll(`span[data-comment-id="${cid}"]`).forEach(el => {
+        el.classList.remove('active');
+      });
 
       renderCommentCards();
       closePopup();
@@ -251,32 +242,21 @@ const CommentsEngine = (() => {
     activeComments.forEach(([key, c]) => {
       const card = document.createElement('div');
       card.className = 'comment-card';
-      card.style.marginBottom = '12px';
-      card.style.borderRadius = '8px';
-      card.style.border = '1px solid #e0e0e0';
-      card.style.padding = '14px';
-      card.style.background = '#ffffff';
       
-      // FIXED: Updated sidebar card list profiles to feature matching pink user layout
+      // FIXED: Removed ugly inline style injections to let the stylesheet handle the design layout
       card.innerHTML = `
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:13px;">
-          <div style="background-color:#ff80ab; display:flex; align-items:center; justify-content:center; border-radius:50%; width:24px; height:24px; color:white;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-            </svg>
-          </div>
-          <div style="display:flex; flex-direction:column;">
-            <span style="font-weight:500; color:#1f1f1f;">You</span>
-            <span style="color:#5f6368; font-size:11px;">${new Date().toLocaleDateString()}</span>
-          </div>
+        <div class="comment-card-header">
+          <div class="comment-avatar">Y</div>
+          <span class="comment-author">You</span>
+          <span class="comment-date" style="margin-left: auto; font-size: 12px; color: var(--text-secondary, #5f6368);">${new Date().toLocaleDateString()}</span>
         </div>
-        <div style="font-style:italic; color:#5f6368; font-size:13px; margin-bottom:6px; background:#f8f9fa; padding:6px 8px; border-left:2px solid #dadce0;">
+        <div class="comment-quote">
           “${c.quote}”
         </div>
-        <div style="font-size:14px; color:#1f1f1f; margin-bottom:10px;">${c.body}</div>
-        <div style="display:flex; gap:12px;">
-          <button data-act="resolve" style="background:none; border:none; color:#0b57d0; font-size:12px; font-weight:500; cursor:pointer;">Resolve</button>
-          <button data-act="delete" style="background:none; border:none; color:#ea4335; font-size:12px; font-weight:500; cursor:pointer;">Delete</button>
+        <div class="comment-body">${c.body}</div>
+        <div class="comment-actions">
+          <button data-act="resolve">Resolve</button>
+          <button data-act="delete" class="delete-btn">Delete</button>
         </div>
       `;
 
