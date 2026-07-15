@@ -1,4 +1,6 @@
-// js/app.js (unchanged, but included for completeness)
+/**
+ * app.js — App Orchestrator (updated for new comment sidebar)
+ */
 document.addEventListener('DOMContentLoaded', () => {
   EditorEngine.renderTabsSidebar();
   EditorEngine.loadActiveTabContent();
@@ -75,10 +77,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  document.getElementById('toolbar-comment-btn')?.addEventListener('click', () => CommentsEngine.promptForCommentOnSelection());
+  // ─── UPDATED: comment button now uses #add-comment-btn ───
+  document.getElementById('add-comment-btn')?.addEventListener('click', () => CommentsEngine.promptForCommentOnSelection());
 
+  // ─── UPDATED: toggle uses #docs-sidebar ───
   const commentBtn = document.getElementById('comment-btn');
-  const commentsSidebar = document.getElementById('comments-sidebar');
+  const commentsSidebar = document.getElementById('docs-sidebar');       // changed from 'comments-sidebar'
   const closeComments = document.getElementById('close-comments-btn');
   if (commentBtn && commentsSidebar) {
     commentBtn.addEventListener('click', () => {
@@ -125,4 +129,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ─── UPDATED: click‑outside uses #docs-sidebar ───
+  document.addEventListener('click', (e) => {
+    if (commentsSidebar && !commentsSidebar.hidden) {
+      const isCommentBtn = e.target.closest('#comment-btn');
+      const isSidebar = e.target.closest('#docs-sidebar');
+      if (!isCommentBtn && !isSidebar) {
+        commentsSidebar.hidden = true;
+      }
+    }
+  });
 });
